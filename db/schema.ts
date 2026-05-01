@@ -33,3 +33,17 @@ export const verification = sqliteTable('verification', {
 	expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
 	createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull()
 });
+
+export const userProfile = sqliteTable('user_profile', {
+	userId: text('user_id')
+		.primaryKey()
+		.references(() => user.id, { onDelete: 'cascade' }),
+	displayName: text('display_name'),
+	language: text('language', { enum: ['en', 'it'] })
+		.notNull()
+		.default('en'),
+	isNpc: integer('is_npc', { mode: 'boolean' }).notNull().default(false),
+	settingsJson: text('settings_json'),
+	createdAt: integer('created_at').notNull(),
+	updatedAt: integer('updated_at').notNull()
+});

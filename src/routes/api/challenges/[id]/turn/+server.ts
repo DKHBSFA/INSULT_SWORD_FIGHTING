@@ -1,0 +1,215 @@
+import type { RequestHandler } from './$types';
+import { makeDb } from '$lib/server/db/client';
+import {
+	challenges,
+	matches,
+	turns,
+	opponentPersonas,
+	userProfile
+} from '../../../../../../db/schema';
+import { eq, and, desc } from 'drizzle-orm';
+import { newUlid } from '$lib/server/db/ulid';
+import { judgeTurn } from '$lib/server/llm/judge';
+import { generateNpcLlm, pickNpcDeterministic } from '$lib/server/game/npc';
+import { applyLearning } from '$lib/server/game/learning';
+import { saveEntryWithBackfill } from '$lib/server/pool/save';
+import { validateInsultText } from '$lib/shared/validation';
+import { nextAttacker } from '$lib/server/game/state';
+import type { Judgment, Side } from '$lib/shared/types';
+
+type AttackSource = 'personal_pool' | 'free_text' | 'opponent_npc';
+type DefenseSource = 'personal_pool' | 'free_text' | 'opponent_npc' | 'timeout';
+
+export const POST: RequestHandler = async ({ request, params, platform }) => {
+	if (!platform?.env) return new Response('platform unavailable', { status: 500 });
+	const env = platform.env;
+	const db = makeDb(env.DB);
+	const userId = env.ENVIRONMENT !== 'production' ? request.headers.get('X-Test-User') : null;
+	if (!userId) return new Response('unauthorized', { status: 401 });
+
+	const idemKey = request.headers.get('Idempotency-Key');
+	if (!idemKey) return new Response('Idempotency-Key header required', { status: 400 });
+
+	const cached = await env.KV.get(`turn-idem:${params.id}:${idemKey}`);
+	if (cached)
+		return new Response(cached, {
+			status: 200,
+			headers: { 'Content-Type': 'application/json' }
+		});
+
+	const body = (await request.json()) as { text: string; source: AttackSource };
+	const text = validateInsultText(body.text);
+
+	const ch = await db.select().from(challenges).where(eq(challenges.id, params.id)).limit(1);
+	if (!ch[0] || ch[0].userId !== userId) return new Response('not found', { status: 404 });
+	if (ch[0].status !== 'in_progress') return new Response('challenge not active', { status: 409 });
+
+	const persona = await db
+		.select()
+		.from(opponentPersonas)
+		.where(eq(opponentPersonas.userId, ch[0].opponentUserId))
+		.limit(1);
+	if (!persona[0]) return new Response('persona not found', { status: 500 });
+
+	const profile = await db
+		.select()
+		.from(userProfile)
+		.where(eq(userProfile.userId, userId))
+		.limit(1);
+	const lang: 'en' | 'it' = profile[0]?.language ?? 'en';
+
+	let curMatch = (
+		await db
+			.select()
+			.from(matches)
+			.where(and(eq(matches.challengeId, ch[0].id), eq(matches.status, 'in_progress')))
+			.orderBy(desc(matches.matchIndex))
+			.limit(1)
+	)[0];
+	if (!curMatch) {
+		const id = newUlid();
+		const firstAttacker: Side = Math.random() < 0.5 ? 'user' : 'opponent';
+		await db.insert(matches).values({
+			id,
+			challengeId: ch[0].id,
+			matchIndex: 1,
+			firstAttacker,
+			status: 'in_progress',
+			startedAt: Date.now()
+		});
+		curMatch = (await db.select().from(matches).where(eq(matches.id, id)).limit(1))[0]!;
+	}
+
+	const lastTurn = (
+		await db
+			.select()
+			.from(turns)
+			.where(eq(turns.matchId, curMatch.id))
+			.orderBy(desc(turns.turnNumber))
+			.limit(1)
+	)[0];
+	const attacker: Side = lastTurn
+		? nextAttacker(lastTurn.attacker as Side, lastTurn.judgment as Exclude<Judgment, 'timeout'>)
+		: (curMatch.firstAttacker as Side);
+
+	let attackText = text;
+	let defenseText = text;
+	let opponentModel: string | null = null;
+
+	const isAdaptive = persona[0].poolMode === 'adaptive';
+	const llmEnv = env as Parameters<typeof generateNpcLlm>[1];
+
+	if (attacker === 'user') {
+		if (ch[0].mode === 'tutorial' || !isAdaptive) {
+			const det = await pickNpcDeterministic(db, {
+				npcUserId: ch[0].opponentUserId,
+				kind: 'defense',
+				exclude: []
+			});
+			defenseText = det?.text ?? '';
+		} else {
+			const npc = await generateNpcLlm(db, llmEnv, {
+				npcUserId: ch[0].opponentUserId,
+				personaDescription: persona[0].description,
+				role: 'defender',
+				lastUserText: text,
+				mirrorLanguage: lang
+			});
+			defenseText = npc.text;
+			opponentModel = npc.modelId;
+		}
+	} else {
+		if (ch[0].mode === 'tutorial' || !isAdaptive) {
+			const det = await pickNpcDeterministic(db, {
+				npcUserId: ch[0].opponentUserId,
+				kind: 'attack',
+				exclude: []
+			});
+			attackText = det?.text ?? '';
+		} else {
+			const npc = await generateNpcLlm(db, llmEnv, {
+				npcUserId: ch[0].opponentUserId,
+				personaDescription: persona[0].description,
+				role: 'attacker',
+				lastUserText: '',
+				mirrorLanguage: lang
+			});
+			attackText = npc.text;
+			opponentModel = npc.modelId;
+		}
+	}
+
+	const verdict = await judgeTurn(env as Parameters<typeof judgeTurn>[0], {
+		attackText,
+		defenseText
+	});
+
+	const turnId = newUlid();
+	const turnNumber = (lastTurn?.turnNumber ?? 0) + 1;
+	const attackSource: AttackSource = attacker === 'user' ? body.source : 'opponent_npc';
+	const defenseSource: DefenseSource =
+		attacker === 'user' ? 'opponent_npc' : (body.source as DefenseSource);
+	await db.insert(turns).values({
+		id: turnId,
+		matchId: curMatch.id,
+		turnNumber,
+		isSuddenDeath: turnNumber > 5,
+		attacker,
+		attackText,
+		attackSource,
+		defenseText,
+		defenseSource,
+		judgment: verdict.judgment,
+		judgmentReasoning: verdict.reasoning ?? null,
+		judgeModel: verdict.modelId,
+		opponentModel,
+		attackStartedAt: Date.now(),
+		defenseSubmittedAt: Date.now(),
+		judgedAt: Date.now()
+	});
+
+	const upd = {
+		scoreUser: curMatch.scoreUser,
+		scoreOpponent: curMatch.scoreOpponent,
+		scoreTies: curMatch.scoreTies
+	};
+	if (verdict.judgment === 'tie') upd.scoreTies++;
+	else if (
+		(attacker === 'user' && verdict.judgment === 'attacker_wins') ||
+		(attacker === 'opponent' && verdict.judgment === 'defender_wins')
+	)
+		upd.scoreUser++;
+	else upd.scoreOpponent++;
+	await db.update(matches).set(upd).where(eq(matches.id, curMatch.id));
+
+	await applyLearning({
+		db,
+		env: llmEnv,
+		ctx: { waitUntil: (p) => platform.ctx.waitUntil(p) },
+		saveFn: saveEntryWithBackfill,
+		turn: {
+			attacker,
+			attackText,
+			defenseText: defenseText || null,
+			judgment: verdict.judgment
+		},
+		userId,
+		npcUserId: ch[0].opponentUserId,
+		npcPoolMode: persona[0].poolMode
+	});
+
+	const responseBody = JSON.stringify({
+		turnId,
+		turnNumber,
+		attacker,
+		attackText,
+		defenseText,
+		judgment: verdict.judgment,
+		reasoning: verdict.reasoning ?? null
+	});
+	await env.KV.put(`turn-idem:${params.id}:${idemKey}`, responseBody, { expirationTtl: 3600 });
+	return new Response(responseBody, {
+		status: 200,
+		headers: { 'Content-Type': 'application/json' }
+	});
+};

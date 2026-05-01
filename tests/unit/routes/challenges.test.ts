@@ -105,6 +105,23 @@ describe('GET /api/challenges/:id', () => {
 	});
 });
 
+describe('POST /api/challenges/:id/turn', () => {
+	it('requires Idempotency-Key header', async () => {
+		const create = await SELF.fetch('https://example.com/api/challenges', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json', 'X-Test-User': 'p1' },
+			body: JSON.stringify({ mode: 'match', opponentUserId: 'brutus', format: 'bo1' })
+		});
+		const { id } = (await create.json()) as { id: string };
+		const res = await SELF.fetch(`https://example.com/api/challenges/${id}/turn`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json', 'X-Test-User': 'p1' },
+			body: JSON.stringify({ text: 'hello', source: 'free_text' })
+		});
+		expect(res.status).toBe(400);
+	});
+});
+
 describe('POST /api/challenges/:id/abandon', () => {
 	it('marks abandoned', async () => {
 		const create = await SELF.fetch('https://example.com/api/challenges', {

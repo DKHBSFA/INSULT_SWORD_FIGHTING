@@ -47,3 +47,18 @@ export const userProfile = sqliteTable('user_profile', {
 	createdAt: integer('created_at').notNull(),
 	updatedAt: integer('updated_at').notNull()
 });
+
+export const opponentPersonas = sqliteTable('opponent_personas', {
+	id: text('id').primaryKey(),
+	userId: text('user_id')
+		.notNull()
+		.unique()
+		.references(() => user.id, { onDelete: 'cascade' }),
+	name: text('name').notNull(),
+	description: text('description').notNull(),
+	spriteSetUrl: text('sprite_set_url').notNull(),
+	poolMode: text('pool_mode', { enum: ['fixed', 'adaptive'] })
+		.notNull()
+		.default('adaptive'),
+	active: integer('active', { mode: 'boolean' }).notNull().default(true)
+});

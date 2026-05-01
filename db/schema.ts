@@ -116,3 +116,111 @@ export const defensePool = sqliteTable(
 			.where(sql`${t.deletedAt} IS NULL`)
 	})
 );
+
+export const scenes = sqliteTable('scenes', {
+	id: text('id').primaryKey(),
+	name: text('name').notNull(),
+	svgLayersJson: text('svg_layers_json').notNull(),
+	active: integer('active', { mode: 'boolean' }).notNull().default(true),
+	createdAt: integer('created_at').notNull()
+});
+
+export const challenges = sqliteTable(
+	'challenges',
+	{
+		id: text('id').primaryKey(),
+		userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+		opponentUserId: text('opponent_user_id')
+			.notNull()
+			.references(() => user.id),
+		opponentType: text('opponent_type', { enum: ['ai', 'human'] })
+			.notNull()
+			.default('ai'),
+		mode: text('mode', { enum: ['tutorial', 'match'] })
+			.notNull()
+			.default('match'),
+		format: text('format', { enum: ['bo1', 'bo2'] }).notNull(),
+		sceneId: text('scene_id')
+			.notNull()
+			.references(() => scenes.id),
+		status: text('status', { enum: ['in_progress', 'completed', 'abandoned'] }).notNull(),
+		winner: text('winner', { enum: ['user', 'opponent'] }),
+		endReason: text('end_reason', {
+			enum: ['matches_completed', 'abandoned', 'timeout_server']
+		}),
+		startedAt: integer('started_at').notNull(),
+		endedAt: integer('ended_at')
+	},
+	(t) => ({
+		byUserStatus: index('challenges_by_user_status').on(t.userId, t.status, t.startedAt),
+		byStatus: index('challenges_by_status').on(t.status, t.startedAt),
+		oneInProgressPerUser: uniqueIndex('challenges_one_in_progress_per_user')
+			.on(t.userId)
+			.where(sql`${t.status} = 'in_progress'`)
+	})
+);
+
+export const matches = sqliteTable(
+	'matches',
+	{
+		id: text('id').primaryKey(),
+		challengeId: text('challenge_id')
+			.notNull()
+			.references(() => challenges.id, { onDelete: 'cascade' }),
+		matchIndex: integer('match_index').notNull(),
+		firstAttacker: text('first_attacker', { enum: ['user', 'opponent'] }).notNull(),
+		status: text('status', { enum: ['in_progress', 'completed', 'abandoned'] }).notNull(),
+		winner: text('winner', { enum: ['user', 'opponent'] }),
+		endReason: text('end_reason', {
+			enum: [
+				'turns_completed',
+				'sudden_death_resolved',
+				'sudden_death_random_tiebreak',
+				'abandoned'
+			]
+		}),
+		scoreUser: integer('score_user').notNull().default(0),
+		scoreOpponent: integer('score_opponent').notNull().default(0),
+		scoreTies: integer('score_ties').notNull().default(0),
+		startedAt: integer('started_at').notNull(),
+		endedAt: integer('ended_at')
+	},
+	(t) => ({
+		uniqIndex: uniqueIndex('matches_challenge_index').on(t.challengeId, t.matchIndex)
+	})
+);
+
+export const turns = sqliteTable(
+	'turns',
+	{
+		id: text('id').primaryKey(),
+		matchId: text('match_id')
+			.notNull()
+			.references(() => matches.id, { onDelete: 'cascade' }),
+		turnNumber: integer('turn_number').notNull(),
+		isSuddenDeath: integer('is_sudden_death', { mode: 'boolean' }).notNull().default(false),
+		attacker: text('attacker', { enum: ['user', 'opponent'] }).notNull(),
+		attackText: text('attack_text').notNull(),
+		attackSource: text('attack_source', {
+			enum: ['personal_pool', 'free_text', 'opponent_npc']
+		}).notNull(),
+		attackPersonalPoolId: text('attack_personal_pool_id'),
+		defenseText: text('defense_text'),
+		defenseSource: text('defense_source', {
+			enum: ['personal_pool', 'free_text', 'opponent_npc', 'timeout']
+		}).notNull(),
+		defensePersonalPoolId: text('defense_personal_pool_id'),
+		judgment: text('judgment', {
+			enum: ['attacker_wins', 'defender_wins', 'tie', 'timeout']
+		}).notNull(),
+		judgmentReasoning: text('judgment_reasoning'),
+		judgeModel: text('judge_model').notNull(),
+		opponentModel: text('opponent_model'),
+		attackStartedAt: integer('attack_started_at').notNull(),
+		defenseSubmittedAt: integer('defense_submitted_at'),
+		judgedAt: integer('judged_at').notNull()
+	},
+	(t) => ({
+		uniqMatchTurn: uniqueIndex('turns_match_turn').on(t.matchId, t.turnNumber)
+	})
+);

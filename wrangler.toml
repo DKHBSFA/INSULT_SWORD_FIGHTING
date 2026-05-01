@@ -18,25 +18,47 @@ migrations_dir = "db/migrations"
 binding = "KV"
 id = "local-dev-placeholder"
 
-[[vectorize]]
-binding = "POOL_VECTORS"
-index_name = "pool-entries"
-
-[ai]
-binding = "AI"
-
 [triggers]
 crons = ["* * * * *", "0 * * * *"]
 
 [vars]
 ENVIRONMENT = "development"
 
+# Vectorize and AI bindings are remote-only — added only in staging/production.
+# Local dev/tests use mocks (lib/server/pool/vectorize-mock.ts, lib/server/llm/mock.ts).
+
 [env.production]
 name = "isf"
 [env.production.vars]
 ENVIRONMENT = "production"
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "isf"
+database_id = "PLACEHOLDER_FILL_AFTER_d1_create"
+migrations_dir = "db/migrations"
+[[env.production.kv_namespaces]]
+binding = "KV"
+id = "PLACEHOLDER_FILL_AFTER_kv_create"
+[[env.production.vectorize]]
+binding = "POOL_VECTORS"
+index_name = "pool-entries"
+[env.production.ai]
+binding = "AI"
 
 [env.staging]
 name = "isf-staging"
 [env.staging.vars]
 ENVIRONMENT = "staging"
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "isf-staging"
+database_id = "PLACEHOLDER_FILL_AFTER_d1_create"
+migrations_dir = "db/migrations"
+[[env.staging.kv_namespaces]]
+binding = "KV"
+id = "PLACEHOLDER_FILL_AFTER_kv_create"
+[[env.staging.vectorize]]
+binding = "POOL_VECTORS"
+index_name = "pool-entries-staging"
+[env.staging.ai]
+binding = "AI"

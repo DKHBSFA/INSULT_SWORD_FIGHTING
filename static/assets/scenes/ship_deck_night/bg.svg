@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+	<rect width="800" height="600" fill="#0a1830" />
+	<circle cx="650" cy="120" r="40" fill="#fef3c7" opacity="0.9" />
+	<text x="400" y="300" text-anchor="middle" fill="#fbbf24" font-size="32" font-family="serif">
+		ship deck — night
+	</text>
+	<text x="400" y="340" text-anchor="middle" fill="#9ca3af" font-size="16">PLACEHOLDER</text>
+</svg>

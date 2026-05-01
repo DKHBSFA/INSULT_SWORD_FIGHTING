@@ -50,6 +50,7 @@
 		"vitest": "^4.1.5"
 	},
 	"dependencies": {
+		"@anthropic-ai/sdk": "^0.92.0",
 		"@lucide/svelte": "^1.14.0",
 		"@tailwindcss/vite": "^4.2.4",
 		"better-auth": "^1.6.9",

@@ -10,7 +10,7 @@ describe('embedText', () => {
 		} as unknown as GatewayEnv;
 		const v = await embedText(env, 'hello');
 		expect(v).toEqual([0.1, 0.2, 0.3]);
-		expect(env.AI.run).toHaveBeenCalledWith(
+		expect(env.AI!.run).toHaveBeenCalledWith(
 			'@cf/baai/bge-m3',
 			expect.objectContaining({ text: ['hello'] }),
 			expect.any(Object)

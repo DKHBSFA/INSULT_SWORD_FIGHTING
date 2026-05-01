@@ -15,6 +15,7 @@ import { applyLearning } from '$lib/server/game/learning';
 import { saveEntryWithBackfill } from '$lib/server/pool/save';
 import { validateInsultText } from '$lib/shared/validation';
 import { nextAttacker } from '$lib/server/game/state';
+import { readDevUserId } from '$lib/server/auth/dev-user';
 import type { Judgment, Side } from '$lib/shared/types';
 
 type AttackSource = 'personal_pool' | 'free_text' | 'opponent_npc';
@@ -24,7 +25,7 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 	if (!platform?.env) return new Response('platform unavailable', { status: 500 });
 	const env = platform.env;
 	const db = makeDb(env.DB);
-	const userId = env.ENVIRONMENT !== 'production' ? request.headers.get('X-Test-User') : null;
+	const userId = readDevUserId(request, env);
 	if (!userId) return new Response('unauthorized', { status: 401 });
 
 	const idemKey = request.headers.get('Idempotency-Key');

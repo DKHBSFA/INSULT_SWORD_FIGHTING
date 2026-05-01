@@ -5,12 +5,13 @@ import { attackPool, defensePool } from '../../../../db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 import { saveEntryWithBackfill } from '$lib/server/pool/save';
 import { validateInsultText } from '$lib/shared/validation';
+import { readDevUserId } from '$lib/server/auth/dev-user';
 
 export const GET: RequestHandler = async ({ url, request, platform }) => {
 	if (!platform?.env) return new Response('platform unavailable', { status: 500 });
 	const env = platform.env;
 	const db = makeDb(env.DB);
-	const userId = env.ENVIRONMENT !== 'production' ? request.headers.get('X-Test-User') : null;
+	const userId = readDevUserId(request, env);
 	if (!userId) return new Response('unauthorized', { status: 401 });
 	const kind = url.searchParams.get('kind');
 	const table = kind === 'attack' ? attackPool : kind === 'defense' ? defensePool : null;
@@ -26,7 +27,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	if (!platform?.env) return new Response('platform unavailable', { status: 500 });
 	const env = platform.env;
 	const db = makeDb(env.DB);
-	const userId = env.ENVIRONMENT !== 'production' ? request.headers.get('X-Test-User') : null;
+	const userId = readDevUserId(request, env);
 	if (!userId) return new Response('unauthorized', { status: 401 });
 	const body = (await request.json()) as { kind: 'attack' | 'defense'; text: string };
 	const text = validateInsultText(body.text);

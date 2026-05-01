@@ -4,20 +4,14 @@ import { makeDb } from '$lib/server/db/client';
 import { challenges, opponentPersonas, scenes } from '../../../../db/schema';
 import { newUlid } from '$lib/server/db/ulid';
 import { isUniqueError } from '$lib/server/db/errors';
+import { readDevUserId } from '$lib/server/auth/dev-user';
 import { eq, and } from 'drizzle-orm';
-
-function getUserId(request: Request, env: App.Platform['env']): string | null {
-	if (env.ENVIRONMENT !== 'production') {
-		return request.headers.get('X-Test-User');
-	}
-	return null;
-}
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	if (!platform?.env) return new Response('platform unavailable', { status: 500 });
 	const env = platform.env;
 	const db = makeDb(env.DB);
-	const userId = getUserId(request, env);
+	const userId = readDevUserId(request, env);
 	if (!userId) return new Response('unauthorized', { status: 401 });
 
 	const body = (await request.json()) as {

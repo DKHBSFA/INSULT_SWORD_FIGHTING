@@ -1,0 +1,6 @@
+# Copy to `.dev.vars` (gitignored) and fill in.
+# Loaded by wrangler / vite getPlatformProxy in dev.
+
+ANTHROPIC_API_KEY=sk-ant-...
+AUTH_SECRET=local-dev-only-change-me
+ENVIRONMENT=development

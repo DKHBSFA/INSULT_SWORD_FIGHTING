@@ -11,13 +11,14 @@ import {
 	challenges
 } from '../../../../../db/schema';
 import { eq } from 'drizzle-orm';
+import { readDevUserId } from '$lib/server/auth/dev-user';
 import { deletePoolVectors, type PoolEnv } from '$lib/server/pool/search';
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	if (!platform?.env) return new Response('platform unavailable', { status: 500 });
 	const env = platform.env;
 	const db = makeDb(env.DB);
-	const userId = env.ENVIRONMENT !== 'production' ? request.headers.get('X-Test-User') : null;
+	const userId = readDevUserId(request, env);
 	if (!userId) return new Response('unauthorized', { status: 401 });
 
 	const aIds = (

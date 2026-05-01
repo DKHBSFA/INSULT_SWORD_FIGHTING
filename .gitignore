@@ -16,3 +16,4 @@ test-results/
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 Thumbs.db
+src/lib/paraglide/

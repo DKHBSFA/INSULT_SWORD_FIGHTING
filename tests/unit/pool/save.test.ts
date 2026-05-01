@@ -1,8 +1,10 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { env } from 'cloudflare:test';
 import { makeDb } from '../../../src/lib/server/db/client';
-import { saveEntry } from '../../../src/lib/server/pool/save';
+import { saveEntry, saveEntryWithBackfill } from '../../../src/lib/server/pool/save';
 import { user, attackPool } from '../../../db/schema';
+import type { GatewayEnv } from '../../../src/lib/server/llm/gateway';
+import type { PoolEnv } from '../../../src/lib/server/pool/search';
 
 beforeEach(async () => {
 	const db = makeDb(env.DB);
@@ -45,5 +47,26 @@ describe('saveEntry', () => {
 			source: 'manual'
 		});
 		expect(id2).toBe(id1);
+	});
+});
+
+describe('saveEntryWithBackfill', () => {
+	it('schedules backfill via ctx.waitUntil', async () => {
+		const db = makeDb(env.DB);
+		const waitUntil = vi.fn();
+		const ctx = { waitUntil };
+		const llmEnv = {
+			AI: { run: vi.fn().mockResolvedValue({ data: [new Array(1024).fill(0.1)] }) },
+			POOL_VECTORS: { insert: vi.fn().mockResolvedValue({ ids: [], count: 0 }) },
+			ENVIRONMENT: 'test'
+		} as unknown as GatewayEnv & PoolEnv;
+		const id = await saveEntryWithBackfill(db, llmEnv, ctx, {
+			userId: 'u1',
+			kind: 'attack',
+			text: 'fresh insult',
+			source: 'manual'
+		});
+		expect(id).toBeTruthy();
+		expect(waitUntil).toHaveBeenCalledTimes(1);
 	});
 });

@@ -1,10 +1,6 @@
 import { sqliteTable, text, integer, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
-void index;
-void uniqueIndex;
-void sql;
-
 export const user = sqliteTable('user', {
 	id: text('id').primaryKey(),
 	email: text('email').notNull().unique(),
@@ -62,3 +58,61 @@ export const opponentPersonas = sqliteTable('opponent_personas', {
 		.default('adaptive'),
 	active: integer('active', { mode: 'boolean' }).notNull().default(true)
 });
+
+export const attackPool = sqliteTable(
+	'attack_pool',
+	{
+		id: text('id').primaryKey(),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		text: text('text').notNull(),
+		normalized: text('normalized').notNull(),
+		source: text('source', { enum: ['manual', 'seed', 'learned_from_user'] }).notNull(),
+		featuresJson: text('features_json'),
+		embeddingId: text('embedding_id'),
+		learnedFromUserId: text('learned_from_user_id').references(() => user.id, {
+			onDelete: 'set null'
+		}),
+		usageCount: integer('usage_count').notNull().default(0),
+		createdAt: integer('created_at').notNull(),
+		deletedAt: integer('deleted_at')
+	},
+	(t) => ({
+		byUser: index('attack_pool_by_user').on(t.userId, t.deletedAt, t.createdAt),
+		uniqNormalized: uniqueIndex('attack_pool_uniq_normalized')
+			.on(t.userId, t.normalized)
+			.where(sql`${t.deletedAt} IS NULL`)
+	})
+);
+
+export const defensePool = sqliteTable(
+	'defense_pool',
+	{
+		id: text('id').primaryKey(),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		text: text('text').notNull(),
+		normalized: text('normalized').notNull(),
+		source: text('source', {
+			enum: ['manual', 'auto_won', 'seed', 'learned_from_user']
+		}).notNull(),
+		featuresJson: text('features_json'),
+		embeddingId: text('embedding_id'),
+		learnedFromUserId: text('learned_from_user_id').references(() => user.id, {
+			onDelete: 'set null'
+		}),
+		usageCount: integer('usage_count').notNull().default(0),
+		timesWon: integer('times_won').notNull().default(0),
+		firstWonTurnId: text('first_won_turn_id'),
+		createdAt: integer('created_at').notNull(),
+		deletedAt: integer('deleted_at')
+	},
+	(t) => ({
+		byUser: index('defense_pool_by_user').on(t.userId, t.deletedAt, t.createdAt),
+		uniqNormalized: uniqueIndex('defense_pool_uniq_normalized')
+			.on(t.userId, t.normalized)
+			.where(sql`${t.deletedAt} IS NULL`)
+	})
+);

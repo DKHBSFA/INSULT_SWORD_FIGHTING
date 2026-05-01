@@ -13,3 +13,6 @@ dist/
 coverage/
 playwright-report/
 test-results/
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+Thumbs.db

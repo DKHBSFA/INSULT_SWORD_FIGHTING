@@ -1,0 +1,10 @@
+node_modules/
+build/
+.svelte-kit/
+dist/
+pnpm-lock.yaml
+LICENSE
+CLAUDE.md
+DESIGN.md
+docs/superpowers/
+references/

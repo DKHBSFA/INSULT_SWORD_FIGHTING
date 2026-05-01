@@ -1,0 +1,21 @@
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: '*.{js,ts,svelte,json,md,yml,yaml}'
+      run: pnpm prettier --write {staged_files} && git add {staged_files}
+    lint:
+      glob: '*.{js,ts,svelte}'
+      run: pnpm eslint --fix {staged_files} && git add {staged_files}
+
+commit-msg:
+  commands:
+    commitlint:
+      run: pnpm commitlint --edit {1}
+
+pre-push:
+  commands:
+    typecheck:
+      run: pnpm check
+    test-unit:
+      run: pnpm test:unit

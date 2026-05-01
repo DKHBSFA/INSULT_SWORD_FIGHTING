@@ -1,0 +1,42 @@
+name = "isf"
+main = ".svelte-kit/cloudflare/_worker.js"
+compatibility_date = "2026-05-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+
+[assets]
+directory = ".svelte-kit/cloudflare"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "isf"
+database_id = "local-dev-placeholder"
+migrations_dir = "db/migrations"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "local-dev-placeholder"
+
+[[vectorize]]
+binding = "POOL_VECTORS"
+index_name = "pool-entries"
+
+[ai]
+binding = "AI"
+
+[triggers]
+crons = ["* * * * *", "0 * * * *"]
+
+[vars]
+ENVIRONMENT = "development"
+
+[env.production]
+name = "isf"
+[env.production.vars]
+ENVIRONMENT = "production"
+
+[env.staging]
+name = "isf-staging"
+[env.staging.vars]
+ENVIRONMENT = "staging"

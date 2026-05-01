@@ -1,0 +1,15 @@
+node_modules/
+.svelte-kit/
+.wrangler/
+build/
+dist/
+.env
+.env.local
+.env.*.local
+.dev.vars
+.superpowers/
+*.log
+.DS_Store
+coverage/
+playwright-report/
+test-results/

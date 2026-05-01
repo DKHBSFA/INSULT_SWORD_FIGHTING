@@ -3,3 +3,4 @@ onlyBuiltDependencies:
   - lefthook
   - sharp
   - workerd
+  - better-sqlite3

@@ -9,6 +9,7 @@ import type { PoolEnv } from '../../../src/lib/server/pool/search';
 
 beforeEach(async () => {
 	const db = makeDb(env.DB);
+	await db.delete(attackPool);
 	await db
 		.insert(user)
 		.values({

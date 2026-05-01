@@ -87,3 +87,36 @@ describe('POST /api/challenges', () => {
 		expect(res2.status).toBe(409);
 	});
 });
+
+describe('GET /api/challenges/:id', () => {
+	it('returns challenge state', async () => {
+		const create = await SELF.fetch('https://example.com/api/challenges', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json', 'X-Test-User': 'p1' },
+			body: JSON.stringify({ mode: 'match', opponentUserId: 'brutus', format: 'bo1' })
+		});
+		const { id } = (await create.json()) as { id: string };
+		const res = await SELF.fetch(`https://example.com/api/challenges/${id}`, {
+			headers: { 'X-Test-User': 'p1' }
+		});
+		expect(res.status).toBe(200);
+		const body = (await res.json()) as { status: string };
+		expect(body.status).toBe('in_progress');
+	});
+});
+
+describe('POST /api/challenges/:id/abandon', () => {
+	it('marks abandoned', async () => {
+		const create = await SELF.fetch('https://example.com/api/challenges', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json', 'X-Test-User': 'p1' },
+			body: JSON.stringify({ mode: 'match', opponentUserId: 'brutus', format: 'bo1' })
+		});
+		const { id } = (await create.json()) as { id: string };
+		const res = await SELF.fetch(`https://example.com/api/challenges/${id}/abandon`, {
+			method: 'POST',
+			headers: { 'X-Test-User': 'p1' }
+		});
+		expect(res.status).toBe(200);
+	});
+});

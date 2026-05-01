@@ -2,6 +2,7 @@ import { eq, and, isNull } from 'drizzle-orm';
 import { attackPool, defensePool } from '../../../../db/schema';
 import { canonicalize } from './normalize';
 import { newUlid } from '../db/ulid';
+import { isUniqueError } from '../db/errors';
 import type { AppDb } from '../db/client';
 import { embedText } from '../llm/embedding';
 import { extractFeatures } from '../llm/features';
@@ -56,8 +57,7 @@ export async function saveEntry(db: AppDb, input: SaveEntryInput): Promise<strin
 		}
 		return id;
 	} catch (e: unknown) {
-		const msg = e instanceof Error ? e.message : String(e);
-		if (msg.includes('UNIQUE')) {
+		if (isUniqueError(e)) {
 			const fallback = await db
 				.select({ id: table.id })
 				.from(table)

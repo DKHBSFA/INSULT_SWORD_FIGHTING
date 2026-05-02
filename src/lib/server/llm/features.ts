@@ -34,7 +34,7 @@ export async function extractFeatures(env: GatewayEnv, text: string): Promise<Fe
 						{ role: 'user', content: `<user_text>${text}</user_text>\nReturn the JSON only.` }
 					]
 				}),
-				8000
+				30_000
 			),
 		{ maxAttempts: 3, baseDelayMs: 250 }
 	);

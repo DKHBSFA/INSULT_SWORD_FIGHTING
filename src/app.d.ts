@@ -29,6 +29,8 @@ declare global {
 				RESEND_FROM?: string;
 				AI_GATEWAY_ID?: string;
 				ANTHROPIC_API_KEY?: string;
+				OLLAMA_BASE_URL?: string;
+				OLLAMA_MODEL?: string;
 			};
 			cf?: IncomingRequestCfProperties;
 			ctx: ExecutionContext;

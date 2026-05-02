@@ -6,7 +6,7 @@ export async function embedText(env: GatewayEnv, text: string): Promise<number[]
 		() =>
 			withTimeout(
 				runWorkersAI<{ data: number[][] }>(env, '@cf/baai/bge-m3', { text: [text] }),
-				8000
+				15_000
 			),
 		{ maxAttempts: 3, baseDelayMs: 250 }
 	);

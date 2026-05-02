@@ -4,6 +4,7 @@ import { makeDb } from '$lib/server/db/client';
 import { attackPool, defensePool } from '../../../../db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 import { saveEntryWithBackfill } from '$lib/server/pool/save';
+import { getVectorizeBinding } from '$lib/server/pool/vectorize-mock';
 import { validateInsultText } from '$lib/shared/validation';
 import { readDevUserId } from '$lib/server/auth/dev-user';
 
@@ -31,7 +32,10 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	if (!userId) return new Response('unauthorized', { status: 401 });
 	const body = (await request.json()) as { kind: 'attack' | 'defense'; text: string };
 	const text = validateInsultText(body.text);
-	const llmEnv = env as Parameters<typeof saveEntryWithBackfill>[1];
+	const llmEnv = {
+		...env,
+		POOL_VECTORS: getVectorizeBinding(env)
+	} as Parameters<typeof saveEntryWithBackfill>[1];
 	const id = await saveEntryWithBackfill(
 		db,
 		llmEnv,

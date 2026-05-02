@@ -1,5 +1,6 @@
 import type { RequestHandler } from './$types';
 import { redirect, error } from '@sveltejs/kit';
+import { eq } from 'drizzle-orm';
 import { makeDb } from '$lib/server/db/client';
 import { user, userProfile } from '../../../../db/schema';
 import { DEV_USER_COOKIE } from '$lib/server/auth/dev-user';
@@ -22,16 +23,18 @@ export const GET: RequestHandler = async ({ url, platform, cookies }) => {
 			updatedAt: new Date()
 		})
 		.onConflictDoNothing();
+	const lang = (url.searchParams.get('lang') ?? 'it') as 'en' | 'it';
 	await db
 		.insert(userProfile)
 		.values({
 			userId,
-			language: 'en',
+			language: lang,
 			isNpc: false,
 			createdAt: Date.now(),
 			updatedAt: Date.now()
 		})
 		.onConflictDoNothing();
+	await db.update(userProfile).set({ language: lang }).where(eq(userProfile.userId, userId));
 
 	cookies.set(DEV_USER_COOKIE, userId, {
 		path: '/',

@@ -1,17 +1,24 @@
 import { eq, and, isNull, notInArray, inArray } from 'drizzle-orm';
-import { attackPool, defensePool } from '../../../../db/schema';
+import { attackPool, defensePool, opponentPersonas } from '../../../../db/schema';
 import { embedText } from '../llm/embedding';
 import { generateOpponent } from '../llm/opponent';
 import { queryPoolVectors, type PoolEnv } from '../pool/search';
+import { seedsByPersona } from '../../../../db/seed/pools';
 import type { GatewayEnv } from '../llm/gateway';
 import type { AppDb } from '../db/client';
 
 export async function pickNpcDeterministic(
 	db: AppDb,
-	input: { npcUserId: string; kind: 'attack' | 'defense'; exclude: string[] }
+	input: {
+		npcUserId: string;
+		kind: 'attack' | 'defense';
+		exclude: string[];
+		language?: 'en' | 'it';
+	}
 ): Promise<{ id: string; text: string } | null> {
 	const table = input.kind === 'attack' ? attackPool : defensePool;
 	const conditions = [eq(table.userId, input.npcUserId), isNull(table.deletedAt)];
+	if (input.language) conditions.push(eq(table.language, input.language));
 	if (input.exclude.length > 0) conditions.push(notInArray(table.id, input.exclude));
 	const rows = await db
 		.select({ id: table.id, text: table.text })
@@ -25,6 +32,7 @@ export async function pickNpcDeterministic(
 export type NpcLlmInput = {
 	npcUserId: string;
 	personaDescription: string;
+	personaDescriptionIt?: string | null;
 	role: 'attacker' | 'defender';
 	lastUserText: string;
 	mirrorLanguage: 'en' | 'it';
@@ -35,6 +43,17 @@ export async function generateNpcLlm(
 	env: GatewayEnv & PoolEnv,
 	input: NpcLlmInput
 ): Promise<{ text: string; modelId: string }> {
+	const persona = (
+		await db
+			.select({ id: opponentPersonas.id })
+			.from(opponentPersonas)
+			.where(eq(opponentPersonas.userId, input.npcUserId))
+			.limit(1)
+	)[0];
+
+	const canonicalPairs = persona ? (seedsByPersona[persona.id]?.[input.mirrorLanguage] ?? []) : [];
+	const pairFewShot = canonicalPairs.slice(0, 5);
+
 	const queryText = input.lastUserText || input.personaDescription;
 	const vec = await embedText(env, queryText);
 
@@ -53,18 +72,26 @@ export async function generateNpcLlm(
 			.select({ id: table.id, text: table.text })
 			.from(table)
 			.where(
-				inArray(
-					table.id,
-					matches.map((m) => m.entryId)
+				and(
+					inArray(
+						table.id,
+						matches.map((m) => m.entryId)
+					),
+					eq(table.language, input.mirrorLanguage)
 				)
 			);
 		for (const r of rows) fewShot.push({ kind, text: r.text });
 	}
 
+	const description =
+		input.mirrorLanguage === 'it' && input.personaDescriptionIt
+			? input.personaDescriptionIt
+			: input.personaDescription;
 	return generateOpponent(env, {
 		role: input.role,
-		personaDescription: input.personaDescription,
+		personaDescription: description,
 		fewShot,
+		fewShotPairs: pairFewShot,
 		lastUserText: input.lastUserText,
 		mirrorLanguage: input.mirrorLanguage
 	});

@@ -11,7 +11,7 @@ import {
 	scenes
 } from '../../../../db/schema';
 import { personas } from '../../../../db/seed/personas';
-import { seeds } from '../../../../db/seed/pools';
+import { seedsByPersona } from '../../../../db/seed/pools';
 import { scenesSeed } from '../../../../db/seed/scenes';
 import { canonicalize } from '$lib/server/pool/normalize';
 import { newUlid } from '$lib/server/db/ulid';
@@ -59,11 +59,15 @@ export const GET: RequestHandler = async ({ platform }) => {
 				userId: p.userId,
 				name: p.name,
 				description: p.description,
+				descriptionIt: p.descriptionIt,
 				spriteSetUrl: p.spriteSetUrl,
 				poolMode: p.poolMode,
 				active: true
 			})
-			.onConflictDoNothing();
+			.onConflictDoUpdate({
+				target: opponentPersonas.id,
+				set: { descriptionIt: p.descriptionIt, description: p.description }
+			});
 	}
 
 	for (const s of scenesSeed) {
@@ -78,50 +82,52 @@ export const GET: RequestHandler = async ({ platform }) => {
 		...env,
 		POOL_VECTORS: vectorize
 	} as unknown as GatewayEnv & PoolEnv;
-	const canEnrich = !!env.ANTHROPIC_API_KEY || !!env.AI;
+	const canEnrich = !!env.ANTHROPIC_API_KEY || !!env.OLLAMA_BASE_URL || !!env.AI;
 	let inserted = 0;
 	let enriched = 0;
 
 	for (const p of personas) {
-		const personaSeeds = (
-			seeds as unknown as Record<string, { attack: readonly string[]; defense: readonly string[] }>
-		)[p.id];
-		if (!personaSeeds) continue;
-		for (const kind of ['attack', 'defense'] as const) {
-			const table = kind === 'attack' ? attackPool : defensePool;
-			for (const text of personaSeeds[kind]) {
-				const id = newUlid();
-				const norm = canonicalize(text);
-				try {
-					await db.insert(table).values({
-						id,
-						userId: p.userId,
-						text,
-						normalized: norm,
-						source: 'seed',
-						createdAt: nowMs
-					});
-					inserted++;
-				} catch {
-					continue;
-				}
-				if (!canEnrich) continue;
-				try {
-					const features = await extractFeatures(llmEnv, text);
-					const vec = await embedText(llmEnv, text);
-					await insertPoolVector(llmEnv, {
-						entryId: id,
-						vector: vec,
-						userId: p.userId,
-						kind
-					});
-					await db
-						.update(table)
-						.set({ featuresJson: JSON.stringify(features), embeddingId: id })
-						.where(eq(table.id, id));
-					enriched++;
-				} catch (e) {
-					console.error('seed enrichment failed', id, e);
+		const personaPairs = seedsByPersona[p.id];
+		if (!personaPairs) continue;
+		for (const lang of ['en', 'it'] as const) {
+			for (const pair of personaPairs[lang]) {
+				for (const kind of ['attack', 'defense'] as const) {
+					const text = pair[kind];
+					const table = kind === 'attack' ? attackPool : defensePool;
+					const id = newUlid();
+					const norm = canonicalize(text);
+					try {
+						await db.insert(table).values({
+							id,
+							userId: p.userId,
+							text,
+							normalized: norm,
+							language: lang,
+							source: 'seed',
+							createdAt: nowMs
+						});
+						inserted++;
+					} catch {
+						continue;
+					}
+					if (!canEnrich) continue;
+					try {
+						const features = await extractFeatures(llmEnv, text);
+						const vec = await embedText(llmEnv, text);
+						await insertPoolVector(llmEnv, {
+							entryId: id,
+							vector: vec,
+							userId: p.userId,
+							kind
+						});
+						await db
+							.update(table)
+							.set({ featuresJson: JSON.stringify(features), embeddingId: id })
+							.where(eq(table.id, id));
+						enriched++;
+					} catch (e) {
+						console.error('seed enrichment failed', id, e);
+					}
 				}
 			}
 		}

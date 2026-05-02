@@ -1,6 +1,12 @@
 # Copy to `.dev.vars` (gitignored) and fill in.
 # Loaded by wrangler / vite getPlatformProxy in dev.
 
-ANTHROPIC_API_KEY=sk-ant-...
+# Pick ONE LLM provider for dev:
+# (a) Ollama locale (free, fast, e.g. `ollama pull qwen2.5-coder:3b-instruct`)
+OLLAMA_BASE_URL=http://localhost:11434/v1
+OLLAMA_MODEL=qwen2.5-coder:3b-instruct
+# (b) Anthropic API (paid)
+# ANTHROPIC_API_KEY=sk-ant-...
+
 AUTH_SECRET=local-dev-only-change-me
 ENVIRONMENT=development

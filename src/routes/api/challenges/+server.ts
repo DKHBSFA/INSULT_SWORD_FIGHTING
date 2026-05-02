@@ -5,6 +5,7 @@ import { challenges, opponentPersonas, scenes } from '../../../../db/schema';
 import { newUlid } from '$lib/server/db/ulid';
 import { isUniqueError } from '$lib/server/db/errors';
 import { readDevUserId } from '$lib/server/auth/dev-user';
+import { DIFFICULTIES, type Difficulty, modelForDifficulty } from '$lib/shared/difficulty';
 import { eq, and } from 'drizzle-orm';
 
 export const POST: RequestHandler = async ({ request, platform }) => {
@@ -18,7 +19,11 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		mode: 'tutorial' | 'match';
 		opponentUserId: string;
 		format: 'bo1' | 'bo2';
+		difficulty?: Difficulty;
 	};
+	const difficulty: Difficulty =
+		body.difficulty && DIFFICULTIES.includes(body.difficulty) ? body.difficulty : 'medium';
+	const modelId = modelForDifficulty(difficulty).opponent;
 
 	const persona = await db
 		.select()
@@ -44,11 +49,13 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			opponentType: 'ai',
 			mode: body.mode,
 			format: body.format,
+			difficulty,
+			modelId,
 			sceneId: scene[0]!.id,
 			status: 'in_progress',
 			startedAt: now
 		});
-		return json({ id }, { status: 201 });
+		return json({ id, difficulty, modelId }, { status: 201 });
 	} catch (e: unknown) {
 		if (isUniqueError(e)) {
 			const active = await db

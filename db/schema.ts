@@ -52,6 +52,7 @@ export const opponentPersonas = sqliteTable('opponent_personas', {
 		.references(() => user.id, { onDelete: 'cascade' }),
 	name: text('name').notNull(),
 	description: text('description').notNull(),
+	descriptionIt: text('description_it'),
 	spriteSetUrl: text('sprite_set_url').notNull(),
 	poolMode: text('pool_mode', { enum: ['fixed', 'adaptive'] })
 		.notNull()
@@ -68,6 +69,9 @@ export const attackPool = sqliteTable(
 			.references(() => user.id, { onDelete: 'cascade' }),
 		text: text('text').notNull(),
 		normalized: text('normalized').notNull(),
+		language: text('language', { enum: ['en', 'it'] })
+			.notNull()
+			.default('en'),
 		source: text('source', { enum: ['manual', 'seed', 'learned_from_user'] }).notNull(),
 		featuresJson: text('features_json'),
 		embeddingId: text('embedding_id'),
@@ -80,8 +84,9 @@ export const attackPool = sqliteTable(
 	},
 	(t) => ({
 		byUser: index('attack_pool_by_user').on(t.userId, t.deletedAt, t.createdAt),
+		byUserLang: index('attack_pool_by_user_lang').on(t.userId, t.language, t.deletedAt),
 		uniqNormalized: uniqueIndex('attack_pool_uniq_normalized')
-			.on(t.userId, t.normalized)
+			.on(t.userId, t.language, t.normalized)
 			.where(sql`${t.deletedAt} IS NULL`)
 	})
 );
@@ -95,6 +100,9 @@ export const defensePool = sqliteTable(
 			.references(() => user.id, { onDelete: 'cascade' }),
 		text: text('text').notNull(),
 		normalized: text('normalized').notNull(),
+		language: text('language', { enum: ['en', 'it'] })
+			.notNull()
+			.default('en'),
 		source: text('source', {
 			enum: ['manual', 'auto_won', 'seed', 'learned_from_user']
 		}).notNull(),
@@ -111,8 +119,9 @@ export const defensePool = sqliteTable(
 	},
 	(t) => ({
 		byUser: index('defense_pool_by_user').on(t.userId, t.deletedAt, t.createdAt),
+		byUserLang: index('defense_pool_by_user_lang').on(t.userId, t.language, t.deletedAt),
 		uniqNormalized: uniqueIndex('defense_pool_uniq_normalized')
-			.on(t.userId, t.normalized)
+			.on(t.userId, t.language, t.normalized)
 			.where(sql`${t.deletedAt} IS NULL`)
 	})
 );
@@ -140,6 +149,12 @@ export const challenges = sqliteTable(
 			.notNull()
 			.default('match'),
 		format: text('format', { enum: ['bo1', 'bo2'] }).notNull(),
+		difficulty: text('difficulty', {
+			enum: ['easy', 'medium', 'hard', 'expert', 'legendary']
+		})
+			.notNull()
+			.default('medium'),
+		modelId: text('model_id'),
 		sceneId: text('scene_id')
 			.notNull()
 			.references(() => scenes.id),
@@ -187,6 +202,30 @@ export const matches = sqliteTable(
 	},
 	(t) => ({
 		uniqIndex: uniqueIndex('matches_challenge_index').on(t.challengeId, t.matchIndex)
+	})
+);
+
+export const judgeFeedback = sqliteTable(
+	'judge_feedback',
+	{
+		id: text('id').primaryKey(),
+		challengeId: text('challenge_id')
+			.notNull()
+			.references(() => challenges.id, { onDelete: 'cascade' }),
+		turnId: text('turn_id').references(() => turns.id, { onDelete: 'set null' }),
+		userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+		category: text('category', {
+			enum: ['wrong_winner', 'wrong_reasoning', 'invented_content', 'incoherent', 'other']
+		}).notNull(),
+		expectedJudgment: text('expected_judgment', {
+			enum: ['attacker_wins', 'defender_wins', 'tie', 'unsure']
+		}),
+		comment: text('comment'),
+		githubIssueUrl: text('github_issue_url'),
+		createdAt: integer('created_at').notNull()
+	},
+	(t) => ({
+		byChallenge: index('judge_feedback_by_challenge').on(t.challengeId)
 	})
 );
 

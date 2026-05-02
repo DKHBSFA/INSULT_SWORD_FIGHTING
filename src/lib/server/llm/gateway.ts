@@ -1,10 +1,13 @@
 import type { Ai } from '@cloudflare/workers-types';
 import { makeAnthropicAi } from './anthropic-adapter';
+import { makeOllamaAi } from './ollama-adapter';
 
 export type GatewayEnv = {
 	AI?: Ai;
 	AI_GATEWAY_ID?: string;
 	ANTHROPIC_API_KEY?: string;
+	OLLAMA_BASE_URL?: string;
+	OLLAMA_MODEL?: string;
 	ENVIRONMENT: string;
 };
 
@@ -15,9 +18,14 @@ function resolveAi(env: GatewayEnv): Ai {
 		if (!env.AI) throw new Error('AI binding required in non-dev env');
 		return env.AI;
 	}
+	if (env.OLLAMA_BASE_URL) {
+		return makeOllamaAi(env.OLLAMA_BASE_URL, env.OLLAMA_MODEL ?? 'qwen2.5-coder:3b-instruct');
+	}
 	if (env.ANTHROPIC_API_KEY) return makeAnthropicAi(env.ANTHROPIC_API_KEY);
 	if (env.AI) return env.AI;
-	throw new Error('No AI provider available — set ANTHROPIC_API_KEY in .dev.vars');
+	throw new Error(
+		'No AI provider available — set OLLAMA_BASE_URL or ANTHROPIC_API_KEY in .dev.vars'
+	);
 }
 
 export async function runWorkersAI<T>(env: GatewayEnv, model: string, input: unknown): Promise<T> {

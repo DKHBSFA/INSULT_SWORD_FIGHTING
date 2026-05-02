@@ -1,93 +1,270 @@
-// v1 seed: hand-curated insults per persona. Expand to 30+30 (adaptive) and 5+5 (trainer)
-// via a one-off LLM session; this baseline is sufficient for local dev and smoke tests.
+// Seed pools — Monkey Island canonical insult/response pairs (where applicable),
+// adapted per persona. EN is the canonical original; IT is the canonical/adapted localization.
+// Pair structure preserves the attack→canonical-defense relation that makes Insult Sword Fighting
+// a richer few-shot for the LLM judge and creator.
 
-export const seeds = {
-	old_pirate_brutus: {
-		attack: [
-			'You move like a wounded hippopotamus on a slippery deck!',
-			'Your courage is as deep as a tide-pool at low water.',
-			'I have seen barnacles with sharper wit than you, lad.',
-			'A scurvy dog with manners — and twice the breath.',
-			'Your sword arm wavers like a drunkard counting waves.',
-			"You stink worse than the bilge after a fortnight's becalming.",
-			"Your kin must be proud — proud they've lost track of you.",
-			'Even the rats abandon ships steadier than your stance.',
-			'You haggle like a fishmonger and fight like one of his catches.',
-			'Yer mother was a herring and yer father a buoy with delusions.',
-			'A sailor of your timber would sink in a calm pond.',
-			'Your face would turn the milk in a sea-cow at fifty paces.',
-			"I've seen better swordplay from a one-handed clerk in a duel of wits.",
-			"Your ship's a pram and your crew the rats laughing at the wheel.",
-			"You smell of yesterday's grog and tomorrow's regret."
-		],
-		defense: [
-			'Aye, and yet I stand — which is more than your father could say at his trial.',
-			'You bark like a hound, but bark cannot cleave salt from sea.',
-			'Big words for a soul whose biggest victory was learning to read.',
-			"I've been called worse by men twice your size and half your wit.",
-			'Your insult lands like rain on tarred deck — wet and forgotten.',
-			'A bold tongue, but I notice it wags from a safe distance.',
-			'You aim true — at yourself.',
-			'Words from a man whose breath is the only sharp thing about him.',
-			"I'll take your jest as a compliment; you can't tell the difference.",
-			'Your mouth runs faster than your sword, and twice as foolish.',
-			'A clever line, for a parrot.',
-			'Aye, and your reflection winces in mirrors. Mine merely sighs.',
-			"That hurts — about as much as the sting of a moth's fart.",
-			'Your wit is so dull I could shave with it and still keep the beard.',
-			"Try again, lad. I'll wait. The tide is patient too."
-		]
-	},
-	haughty_nobleman: {
-		attack: [
-			'Your bloodline reads like a footnote — vestigial and unread.',
-			'One observes you at table and pities the fork.',
-			'Sapere aude, they say — you, sir, dared, and erred.',
-			'Even my valet would decline to be seen with you.',
-			'Your hygiene insults the very concept of soap.',
-			'A peasant in costume is still a peasant, and you are not even that.',
-			'You speak French as though it had personally wronged you.',
-			'Cogito ergo sum — and I conclude you are not.',
-			'Your conversation has the depth of a finger bowl, and half the elegance.',
-			'My ancestors fought at Agincourt; yours, I suspect, fled.',
-			'You would dishonor a chamber pot by sitting upon it.',
-			'A man of your caste should not aspire to the company of his betters — or his equals.',
-			'I find your boots offensive; you, less so, but only just.',
-			'Your tailor must weep at night, and I cannot blame him.',
-			"Vous êtes, monsieur, un accident d'état civil."
-		],
-		defense: [
-			'Charming — for a foundling raised by chickens.',
-			'I should expect such manners from one whose crest is a stain.',
-			'Quaint. The lower orders do produce such pithy aphorisms.',
-			'I weep for English when it is spoken by men of your station.',
-			'Forgive me, I was distracted by the smell.',
-			'A fine effort. Do try again, more loudly, so the gardener may judge.',
-			'Spoken like a man whose mother could not afford a tutor — or a father.',
-			'De minimis non curat lex; I shall extend the lex courtesy here.',
-			'Your wit, sir, would shame a turnip.',
-			'I gather you are insulting me; alas, the form is so crude I cannot be sure.',
-			'You take after your name — common.',
-			'Bravo. The kennels will applaud when next they hear of you.',
-			"I have been crossed by sharper tongues at the fishmonger's.",
-			'Pardon — I do not insult those beneath dueling.',
-			'A noble effort from a man unburdened by nobility.'
-		]
-	},
-	trainer: {
-		attack: [
-			'You fight like a dairy farmer.',
-			'I have seen sponges with more spine.',
-			"You're as graceful as a barrel of dropped pottery.",
-			'Your stance betrays a profound misunderstanding of the floor.',
-			'You insult like a child; defend like a smaller one.'
-		],
-		defense: [
-			'How appropriate — you fight like a cow.',
-			'A clever observation. I shall etch it in marble. Or perhaps not.',
-			"My grandmother could parry that, and she's been dead a year.",
-			"That's a fair point — and it lands fairly nowhere.",
-			"I've heard sharper rebukes from sleeping cats."
-		]
-	}
-} as const;
+export type Pair = { attack: string; defense: string };
+export type LangPairs = { en: Pair[]; it: Pair[] };
+
+// MI1 ground combat (Secret of Monkey Island)
+const mi1Ground: LangPairs = {
+	en: [
+		{
+			attack: 'You fight like a dairy farmer.',
+			defense: 'How appropriate. You fight like a cow.'
+		},
+		{
+			attack: 'This is the END for you, you gutter-crawling cur!',
+			defense: "And I've got a little TIP for you. Get the POINT?"
+		},
+		{
+			attack: "I've spoken with apes more polite than you.",
+			defense: "I'm glad to hear you attended your family reunion."
+		},
+		{
+			attack: "Soon you'll be wearing my sword like a shish kebab!",
+			defense: "First you'd better stop waving it like a feather-duster."
+		},
+		{
+			attack: 'My handkerchief will wipe up your blood!',
+			defense: 'So you got that job as janitor, after all.'
+		},
+		{
+			attack: 'People fall at my feet when they see me coming.',
+			defense: 'Even before they smell your breath?'
+		},
+		{
+			attack: 'I once owned a dog that was smarter than you.',
+			defense: 'He must have taught you everything you know.'
+		},
+		{
+			attack: 'You make me want to puke.',
+			defense: 'You make me think somebody already did.'
+		},
+		{
+			attack: "Nobody's ever drawn blood from me and ever lived to tell about it.",
+			defense: "I'd be in real trouble if you ever used your sword."
+		},
+		{
+			attack: 'There are no words for how disgusting you are.',
+			defense: 'Yes there are. You just never learned them.'
+		},
+		{
+			attack: "I've heard you are a contemptible sneak.",
+			defense: "Too bad no one's ever heard of YOU at all."
+		},
+		{
+			attack: 'Every word you say to me is stupid.',
+			defense: "I wanted to make sure you'd feel comfortable with me."
+		}
+	],
+	it: [
+		{
+			attack: 'Combatti come un contadino.',
+			defense: 'Che onore: tu combatti come una mucca.'
+		},
+		{
+			attack: 'Per te è la FINE, cane di fogna!',
+			defense: 'E io ho una bella PUNTA per te. Hai colto il concetto?'
+		},
+		{
+			attack: 'Ho parlato con scimmie più educate di te.',
+			defense: 'Sono felice di sapere che sei andato alla rimpatriata di famiglia.'
+		},
+		{
+			attack: 'Presto porterai la mia spada come uno spiedino!',
+			defense: 'Prima smettila di sventolarla come un piumino per la polvere.'
+		},
+		{
+			attack: 'Il mio fazzoletto asciugherà il tuo sangue!',
+			defense: 'Quindi alla fine quel posto da inserviente lo hai ottenuto.'
+		},
+		{
+			attack: 'La gente cade ai miei piedi quando mi vede arrivare.',
+			defense: 'Anche prima di sentire il tuo alito?'
+		},
+		{
+			attack: 'Avevo un cane più intelligente di te.',
+			defense: 'Dev’essere stato lui a insegnarti tutto quello che sai.'
+		},
+		{
+			attack: 'Mi fai venire voglia di vomitare.',
+			defense: 'Mi fai pensare che qualcuno l’abbia già fatto.'
+		},
+		{
+			attack: 'Nessuno mi ha mai cavato il sangue ed è vissuto per raccontarlo.',
+			defense: 'Sarei in serio pericolo se tu sapessi davvero usare la spada.'
+		},
+		{
+			attack: 'Non ci sono parole per quanto sei disgustoso.',
+			defense: 'Sì che ci sono. È solo che tu non le hai mai imparate.'
+		},
+		{
+			attack: 'Ho sentito dire che sei un bieco furfante.',
+			defense: 'Peccato che nessuno abbia mai sentito parlare di TE.'
+		},
+		{
+			attack: 'Ogni parola che mi rivolgi è stupida.',
+			defense: 'Volevo solo che ti sentissi a tuo agio con me.'
+		}
+	]
+};
+
+// MI2 ship combat (LeChuck's Revenge) — adapted for haughty nobleman tone.
+const mi2Ship: LangPairs = {
+	en: [
+		{
+			attack: 'Have you stopped wearing diapers yet?',
+			defense: 'Why, did you want to borrow one?'
+		},
+		{
+			attack: "I'll skewer you like a pig before I'm done!",
+			defense: 'Too bad nobody ever taught you how to FIGHT.'
+		},
+		{
+			attack: 'Killing you would be justifiable homicide!',
+			defense: 'Then killing you would be self-defense!'
+		},
+		{
+			attack: 'My piercing wit will leave you defenseless.',
+			defense: 'Then put it on display — I would hate to miss it.'
+		},
+		{
+			attack: 'I once thought I had seen everything, until I met you.',
+			defense: 'Do not worry. I will not make a scene of you.'
+		},
+		{
+			attack: "I'll seek my revenge from beyond the grave!",
+			defense: 'From there, you might actually pose a challenge.'
+		},
+		{
+			attack: 'You are as repulsive as a monkey in a negligee.',
+			defense: 'I look that much like your fiancée?'
+		},
+		{
+			attack: 'Every enemy I have met I have annihilated!',
+			defense: 'With that breath, I imagine they all suffocated.'
+		},
+		{
+			attack: 'I have the courage and skill of a master swordsman.',
+			defense: 'I would be in real trouble if you ever used it.'
+		},
+		{
+			attack: "I'll show you that gentlemen die as gracelessly as you.",
+			defense: 'Yet they at least learn the etiquette of falling.'
+		}
+	],
+	it: [
+		{
+			attack: 'Hai smesso di portare i pannolini?',
+			defense: 'Perché, te ne servirebbe uno in prestito?'
+		},
+		{
+			attack: 'Ti infilzerò come un maiale prima di finire!',
+			defense: 'Peccato che nessuno ti abbia mai insegnato a COMBATTERE.'
+		},
+		{
+			attack: 'Ucciderti sarebbe omicidio giustificabile!',
+			defense: 'Allora ucciderti sarebbe legittima difesa!'
+		},
+		{
+			attack: 'La mia arguzia tagliente ti lascerà disarmato.',
+			defense: 'Allora esibiscila pure — non vorrei perdermela.'
+		},
+		{
+			attack: 'Pensavo di aver visto tutto, finché non ho incontrato te.',
+			defense: 'Tranquillo. Di te non farò una scena memorabile.'
+		},
+		{
+			attack: 'Cercherò vendetta dalla tomba!',
+			defense: 'Da lì potresti finalmente costituire una sfida.'
+		},
+		{
+			attack: 'Sei ripugnante come una scimmia in vestaglia.',
+			defense: 'Assomiglio così tanto alla tua fidanzata?'
+		},
+		{
+			attack: 'Ogni nemico che ho incontrato l’ho annientato!',
+			defense: 'Con quell’alito, immagino siano soffocati tutti.'
+		},
+		{
+			attack: 'Possiedo il coraggio e l’abilità di un maestro di spada.',
+			defense: 'Sarei davvero nei guai, se tu li usassi mai.'
+		},
+		{
+			attack: 'Ti mostrerò che i gentiluomini muoiono goffi quanto te.',
+			defense: 'Però loro almeno conoscono l’etichetta del cadere.'
+		}
+	]
+};
+
+// Trainer — small didactic subset of MI1, paired with the canonical responses.
+const trainer: LangPairs = {
+	en: [
+		{ attack: 'You fight like a dairy farmer.', defense: 'How appropriate. You fight like a cow.' },
+		{
+			attack: "I've spoken with apes more polite than you.",
+			defense: "I'm glad to hear you attended your family reunion."
+		},
+		{
+			attack: 'My handkerchief will wipe up your blood!',
+			defense: 'So you got that job as janitor, after all.'
+		},
+		{
+			attack: 'People fall at my feet when they see me coming.',
+			defense: 'Even before they smell your breath?'
+		},
+		{
+			attack: 'I once owned a dog that was smarter than you.',
+			defense: 'He must have taught you everything you know.'
+		},
+		{
+			attack: 'Every word you say to me is stupid.',
+			defense: "I wanted to make sure you'd feel comfortable with me."
+		}
+	],
+	it: [
+		{
+			attack: 'Combatti come un contadino.',
+			defense: 'Che onore: tu combatti come una mucca.'
+		},
+		{
+			attack: 'Ho parlato con scimmie più educate di te.',
+			defense: 'Sono felice di sapere che sei andato alla rimpatriata di famiglia.'
+		},
+		{
+			attack: 'Il mio fazzoletto asciugherà il tuo sangue!',
+			defense: 'Quindi alla fine quel posto da inserviente lo hai ottenuto.'
+		},
+		{
+			attack: 'La gente cade ai miei piedi quando mi vede arrivare.',
+			defense: 'Anche prima di sentire il tuo alito?'
+		},
+		{
+			attack: 'Avevo un cane più intelligente di te.',
+			defense: 'Dev’essere stato lui a insegnarti tutto quello che sai.'
+		},
+		{
+			attack: 'Ogni parola che mi rivolgi è stupida.',
+			defense: 'Volevo solo che ti sentissi a tuo agio con me.'
+		}
+	]
+};
+
+export const seedsByPersona: Record<string, LangPairs> = {
+	old_pirate_brutus: mi1Ground,
+	haughty_nobleman: mi2Ship,
+	trainer
+};
+
+// Backward-compatible flat shape: kept for any consumer that still expects { attack, defense } arrays.
+// Builds a default-language (en) flat view.
+export const seeds = Object.fromEntries(
+	Object.entries(seedsByPersona).map(([k, v]) => [
+		k,
+		{
+			attack: v.en.map((p) => p.attack),
+			defense: v.en.map((p) => p.defense)
+		}
+	])
+) as Record<string, { attack: readonly string[]; defense: readonly string[] }>;

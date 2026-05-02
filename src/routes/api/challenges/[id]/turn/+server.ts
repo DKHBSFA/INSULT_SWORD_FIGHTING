@@ -13,8 +13,9 @@ import { judgeTurn } from '$lib/server/llm/judge';
 import { generateNpcLlm, pickNpcDeterministic } from '$lib/server/game/npc';
 import { applyLearning } from '$lib/server/game/learning';
 import { saveEntryWithBackfill } from '$lib/server/pool/save';
+import { getVectorizeBinding } from '$lib/server/pool/vectorize-mock';
 import { validateInsultText } from '$lib/shared/validation';
-import { nextAttacker } from '$lib/server/game/state';
+import { nextAttacker, isMatchOver, matchWinner } from '$lib/server/game/state';
 import { readDevUserId } from '$lib/server/auth/dev-user';
 import type { Judgment, Side } from '$lib/shared/types';
 
@@ -94,24 +95,29 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 		: (curMatch.firstAttacker as Side);
 
 	let attackText = text;
-	let defenseText = text;
+	let defenseText: string;
 	let opponentModel: string | null = null;
 
 	const isAdaptive = persona[0].poolMode === 'adaptive';
-	const llmEnv = env as Parameters<typeof generateNpcLlm>[1];
+	const llmEnv = {
+		...env,
+		POOL_VECTORS: getVectorizeBinding(env)
+	} as Parameters<typeof generateNpcLlm>[1];
 
 	if (attacker === 'user') {
 		if (ch[0].mode === 'tutorial' || !isAdaptive) {
 			const det = await pickNpcDeterministic(db, {
 				npcUserId: ch[0].opponentUserId,
 				kind: 'defense',
-				exclude: []
+				exclude: [],
+				language: lang
 			});
 			defenseText = det?.text ?? '';
 		} else {
 			const npc = await generateNpcLlm(db, llmEnv, {
 				npcUserId: ch[0].opponentUserId,
 				personaDescription: persona[0].description,
+				personaDescriptionIt: persona[0].descriptionIt,
 				role: 'defender',
 				lastUserText: text,
 				mirrorLanguage: lang
@@ -120,17 +126,25 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			opponentModel = npc.modelId;
 		}
 	} else {
-		if (ch[0].mode === 'tutorial' || !isAdaptive) {
+		const turnNumberToBe = (lastTurn?.turnNumber ?? 0) + 1;
+		const pendingKey = `turn-attack-pending:${ch[0].id}:${turnNumberToBe}`;
+		const pending = await env.KV.get(pendingKey);
+		if (pending) {
+			attackText = pending;
+			await env.KV.delete(pendingKey);
+		} else if (ch[0].mode === 'tutorial' || !isAdaptive) {
 			const det = await pickNpcDeterministic(db, {
 				npcUserId: ch[0].opponentUserId,
 				kind: 'attack',
-				exclude: []
+				exclude: [],
+				language: lang
 			});
 			attackText = det?.text ?? '';
 		} else {
 			const npc = await generateNpcLlm(db, llmEnv, {
 				npcUserId: ch[0].opponentUserId,
 				personaDescription: persona[0].description,
+				personaDescriptionIt: persona[0].descriptionIt,
 				role: 'attacker',
 				lastUserText: '',
 				mirrorLanguage: lang
@@ -138,11 +152,13 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			attackText = npc.text;
 			opponentModel = npc.modelId;
 		}
+		defenseText = text;
 	}
 
 	const verdict = await judgeTurn(env as Parameters<typeof judgeTurn>[0], {
 		attackText,
-		defenseText
+		defenseText,
+		language: lang
 	});
 
 	const turnId = newUlid();
@@ -183,6 +199,40 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 	else upd.scoreOpponent++;
 	await db.update(matches).set(upd).where(eq(matches.id, curMatch.id));
 
+	const finalScore = {
+		user: upd.scoreUser,
+		opponent: upd.scoreOpponent,
+		ties: upd.scoreTies,
+		turnsPlayed: turnNumber,
+		suddenDeath: turnNumber > 5 ? turnNumber - 5 : 0
+	};
+	const matchIsOver = isMatchOver(finalScore);
+	const mWinner = matchIsOver ? matchWinner(finalScore) : null;
+	let challengeOver = false;
+	if (matchIsOver) {
+		await db
+			.update(matches)
+			.set({
+				status: 'completed',
+				winner: mWinner,
+				endReason: turnNumber > 5 ? 'sudden_death_resolved' : 'turns_completed',
+				endedAt: Date.now()
+			})
+			.where(eq(matches.id, curMatch.id));
+		if (ch[0].format === 'bo1') {
+			await db
+				.update(challenges)
+				.set({
+					status: 'completed',
+					winner: mWinner,
+					endReason: 'matches_completed',
+					endedAt: Date.now()
+				})
+				.where(eq(challenges.id, ch[0].id));
+			challengeOver = true;
+		}
+	}
+
 	await applyLearning({
 		db,
 		env: llmEnv,
@@ -206,7 +256,11 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 		attackText,
 		defenseText,
 		judgment: verdict.judgment,
-		reasoning: verdict.reasoning ?? null
+		reasoning: verdict.reasoning ?? null,
+		matchOver: matchIsOver,
+		matchWinner: mWinner,
+		challengeOver,
+		score: { user: upd.scoreUser, opponent: upd.scoreOpponent, ties: upd.scoreTies }
 	});
 	await env.KV.put(`turn-idem:${params.id}:${idemKey}`, responseBody, { expirationTtl: 3600 });
 	return new Response(responseBody, {

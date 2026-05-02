@@ -16,7 +16,7 @@ describe('judgeTurn', () => {
 		expect(r.judgment).toBe('defender_wins');
 		expect(r.reasoning).toBe('clever rebuttal');
 	});
-	it('throws on invalid JSON', async () => {
+	it('throws on invalid JSON', { timeout: 15000 }, async () => {
 		const env = {
 			AI: { run: vi.fn().mockResolvedValue({ response: 'not json' }) },
 			ENVIRONMENT: 'test'

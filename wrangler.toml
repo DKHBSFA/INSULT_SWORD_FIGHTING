@@ -2,7 +2,7 @@ name = "isf"
 main = ".svelte-kit/cloudflare/_worker.js"
 compatibility_date = "2026-05-01"
 compatibility_flags = ["nodejs_compat"]
-workers_dev = false
+workers_dev = true
 
 [assets]
 directory = ".svelte-kit/cloudflare"
@@ -34,11 +34,11 @@ ENVIRONMENT = "production"
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "isf"
-database_id = "PLACEHOLDER_FILL_AFTER_d1_create"
+database_id = "d5cfc870-5396-49a6-89d0-aafc4b6a313e"
 migrations_dir = "db/migrations"
 [[env.production.kv_namespaces]]
 binding = "KV"
-id = "PLACEHOLDER_FILL_AFTER_kv_create"
+id = "faaae1e7e5cd4930b6ef1c117d385977"
 [[env.production.vectorize]]
 binding = "POOL_VECTORS"
 index_name = "pool-entries"

@@ -4,7 +4,7 @@ import { withRetry, withTimeout } from './retry';
 export type Judgment = 'attacker_wins' | 'defender_wins' | 'tie';
 export type JudgeResult = { judgment: Judgment; reasoning?: string; modelId: string };
 
-const JUDGE_MODEL = '@cf/qwen/qwq-32b';
+const JUDGE_MODEL = '@cf/mistralai/mistral-small-3.1-24b-instruct';
 
 function systemPrompt(lang: 'en' | 'it'): string {
 	if (lang === 'it') {
@@ -133,7 +133,10 @@ export async function judgeTurn(
 	return withRetry(
 		async () => {
 			const raw = await withTimeout(
-				runWorkersAI<{ response: string }>(env, JUDGE_MODEL, {
+				runWorkersAI<{
+					response?: string;
+					choices?: { message?: { content?: string } }[];
+				}>(env, JUDGE_MODEL, {
 					messages: [
 						{ role: 'system', content: systemPrompt(lang) },
 						{ role: 'user', content: userPrompt }
@@ -141,7 +144,8 @@ export async function judgeTurn(
 				}),
 				30_000
 			);
-			const text = raw.response.trim();
+			const rawText = raw.response ?? raw.choices?.[0]?.message?.content ?? '';
+			const text = rawText.trim();
 			const match = text.match(/\{[\s\S]*\}/);
 			if (!match) throw new Error('judge response not JSON');
 			const parsed = JSON.parse(match[0]) as { judgment?: unknown; reasoning?: unknown };

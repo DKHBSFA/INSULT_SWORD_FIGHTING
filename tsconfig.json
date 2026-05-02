@@ -1,5 +1,6 @@
 {
 	"extends": "./.svelte-kit/tsconfig.json",
+	"exclude": [".svelte-kit/cloudflare/**", "build/**", "dist/**"],
 	"compilerOptions": {
 		"allowJs": true,
 		"checkJs": true,

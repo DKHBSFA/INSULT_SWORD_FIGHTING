@@ -23,6 +23,11 @@ crons = ["* * * * *", "0 * * * *"]
 
 [vars]
 ENVIRONMENT = "development"
+# Runtime "learning" (post-turn auto-saves with embedding+features per save) is
+# off by default. Curated pool material is generated offline (see references/)
+# and shipped as seed. Set to "true" only if you want runtime growth and you
+# have Workers Paid for the Neuron budget.
+ENABLE_LEARNING = "false"
 
 # Vectorize and AI bindings are remote-only — added only in staging/production.
 # Local dev/tests use mocks (lib/server/pool/vectorize-mock.ts, lib/server/llm/mock.ts).
@@ -31,6 +36,7 @@ ENVIRONMENT = "development"
 name = "isf"
 [env.production.vars]
 ENVIRONMENT = "production"
+ENABLE_LEARNING = "false"
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "isf"
@@ -49,6 +55,7 @@ binding = "AI"
 name = "isf-staging"
 [env.staging.vars]
 ENVIRONMENT = "staging"
+ENABLE_LEARNING = "false"
 [[env.staging.d1_databases]]
 binding = "DB"
 database_name = "isf-staging"

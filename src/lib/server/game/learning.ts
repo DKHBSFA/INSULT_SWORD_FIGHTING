@@ -19,7 +19,7 @@ type SaveFn = (
 
 export async function applyLearning(opts: {
 	db: AppDb;
-	env: GatewayEnv & PoolEnv;
+	env: GatewayEnv & PoolEnv & { ENABLE_LEARNING?: string };
 	ctx: { waitUntil: (p: Promise<unknown>) => void };
 	saveFn: SaveFn;
 	turn: Turn;
@@ -27,6 +27,11 @@ export async function applyLearning(opts: {
 	npcUserId: string;
 	npcPoolMode: 'fixed' | 'adaptive';
 }) {
+	// Runtime learning consumes Workers AI Neurons per turn (embedding +
+	// features for every save). Default-off in production; enable per-env via
+	// wrangler.toml `ENABLE_LEARNING = "true"` once the LLM-author offline
+	// pipeline is in place.
+	if (opts.env.ENABLE_LEARNING !== 'true') return;
 	const { turn } = opts;
 
 	if (turn.attacker === 'opponent' && turn.judgment === 'defender_wins' && turn.defenseText) {

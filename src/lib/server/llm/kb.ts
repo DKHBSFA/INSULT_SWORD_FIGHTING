@@ -140,9 +140,9 @@ const TECHNIQUES: TechniqueDef[] = [
 		nameIt: 'pickup-and-escalate',
 		nameEn: 'pickup-and-escalate',
 		howIt:
-			'prendi UNA parola dell\'attacco e spingila in territorio peggiore.\n   es: Luce: "Age before beauty." Parker: "Pearls before swine." (riprende "before", lo riapplica a "swine"); MI: "Combatti come un contadino" → "Appropriato. Combatti come una vacca."',
+			'prendi UNA parola dell\'attacco e spingila in territorio peggiore RESTANDO NELLO STESSO FRAME-IMMAGINE dell\'attacco. Non introdurre nuovi domini se l\'immagine può essere reindirizzata.\n   es (gold standard): attacco "hai la spada così arrugginita che potresti grattugiare il parmigiano con la lama" → difesa "e la tua spada è talmente corta e smussata da essere inadeguata anche a spalmare il burro" (resta in cucina-utensili, ma lo strumento dell\'attaccante peggiora: dal grattare al solo spalmare).\n   altri: Luce "Age before beauty" → Parker "Pearls before swine" (resta in proverbi-cortesia); MI "Combatti come un contadino" → "Appropriato. Combatti come una vacca." (resta in agricoltura).',
 		howEn:
-			'take ONE word from the attack and push it into worse territory.\n   ex: Luce: "Age before beauty." Parker: "Pearls before swine." (takes "before", reapplies to "swine"); MI: "You fight like a dairy farmer" → "How appropriate. You fight like a cow."'
+			'take ONE word from the attack and push it into worse territory STAYING IN THE SAME IMAGE-FRAME the attacker chose. Do NOT introduce a new domain if the image can be redirected.\n   ex (gold standard): attack "your sword is so rusty you could grate parmesan with the blade" → defense "and yours is so short and dull it can\'t even spread butter" (stays in kitchen-tools, but the attacker\'s instrument worsens: from grating to merely spreading).\n   others: Luce "Age before beauty" → Parker "Pearls before swine" (stays in courtesy-aphorisms); MI "You fight like a dairy farmer" → "How appropriate. You fight like a cow." (stays in farming).'
 	}
 ];
 

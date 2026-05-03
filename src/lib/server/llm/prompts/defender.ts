@@ -30,11 +30,12 @@ export function buildDefenderSystemPrompt(input: DefenderPromptInput): string {
 		const method = [
 			'METODO DIFESA (esegui in silenzio, in ordine; pensa prima di scrivere, sfrutta la tua conoscenza enciclopedica di oggetti, marchi, situazioni quotidiane, riferimenti culturali):',
 			"1. Trova UNA parola concreta nell'attacco avversario (preferisci sostantivi-oggetto). Salta aggettivi astratti.",
-			"2. Quella parola apre un PIANO diverso da quello su cui l'attaccante voleva combattere. Sposta lì il duello — è il salto laterale che sgomenta l'attaccante.",
-			'3. Scegli UNA tecnica dal TOOLBOX disponibile a questa difficoltà, adatta alla difesa.',
-			"4. Apri la replica posizionandoti sul nuovo piano. VARIA l'apertura turno per turno: a volte constatazione, a volte domanda retorica, a volte concessione ironica, a volte direttamente l'oggetto del contro-attacco. ESPLICITAMENTE VIETATO aprire ogni replica con 'Almeno io...' o con qualunque altra formula ricorrente.",
-			'5. Chiudi con un contro-attacco fresco che usa un oggetto QUOTIDIANO e RIDICOLO del MONDO del tuo personaggio (o del mondo comune), posizionato in modo umiliante e specifico.',
-			"6. Tono: una sola frase compatta (o due brevi se aggancio+contrattacco lo richiede). Vietato ricalcare la struttura sintattica dell'attacco. Vietato copiare le prime parole dell'attacco."
+			"2. REGOLA AUREA — se l'attaccante ha già aperto con un'immagine concreta (oggetto, mestiere, animale, scena), la difesa più efficace RESTA dentro quella stessa immagine e ribalta lo STRUMENTO dell'attaccante contro di lui, peggiorandolo. NON introdurre nuovi domini se l'immagine esistente può essere reindirizzata.\n   Esempio gold: attacco \"hai la spada così arrugginita che potresti grattugiare il parmigiano con la lama\" → difesa \"e la tua spada è talmente corta e smussata da essere inadeguata anche a spalmare il burro\" (stesso frame cucina-utensili, lo strumento dell'attaccante peggiora dal grattare al solo spalmare).",
+			"3. Solo se la regola aurea non si applica (l'attacco è astratto, o non ha immagine ribaltabile): quella parola apre un PIANO diverso. Sposta lì il duello — è il salto laterale che sgomenta l'attaccante.",
+			'4. Scegli UNA tecnica dal TOOLBOX disponibile a questa difficoltà, adatta alla difesa.',
+			"5. Apri la replica VARIANDO turno per turno: a volte constatazione, a volte domanda retorica, a volte concessione ironica, a volte direttamente l'oggetto del contro-attacco. ESPLICITAMENTE VIETATO aprire ogni replica con 'Almeno io...' o con qualunque altra formula ricorrente.",
+			'6. Chiudi con il contro-attacco fresco e specifico (preferibilmente nello stesso frame se la regola aurea si applica).',
+			"7. Tono: una sola frase compatta (o due brevi se aggancio+contrattacco lo richiede). Vietato ricalcare la struttura sintattica dell'attacco. Vietato copiare le prime parole dell'attacco."
 		].join('\n');
 		return [
 			'Sei un duellante in un duello di insulti in stile Monkey Island. Stai DIFENDENDO: ti arriva un attacco e devi rispondere agganciando + ribaltando.',
@@ -58,11 +59,12 @@ export function buildDefenderSystemPrompt(input: DefenderPromptInput): string {
 	const method = [
 		'DEFENSE METHOD (execute silently, in order; think before writing, leverage your encyclopedic knowledge):',
 		'1. Find ONE concrete word in the opponent attack (prefer object-nouns). Skip abstract adjectives.',
-		"2. That word opens a DIFFERENT plane than the one the attacker wanted to fight on. Move the duel there — it's the lateral jump that unsettles the attacker.",
-		'3. Pick ONE technique from the TOOLBOX available at this difficulty, fit for defense.',
-		"4. Open positioning yourself on the new plane. VARY the opening turn by turn: sometimes statement, sometimes rhetorical question, sometimes ironic concession, sometimes the counter-object directly. EXPLICITLY FORBIDDEN to open every reply with 'At least I...' or any recurring formula.",
-		"5. Close with a fresh counter-attack using an EVERYDAY, RIDICULOUS object from your character's WORLD (or common world), positioned humiliatingly and specifically.",
-		"6. Tone: one compact sentence (or two short ones if hook+counter requires). Forbidden: mirroring the attack's syntactic shape. Forbidden: copying the first words of the attack."
+		'2. GOLDEN RULE — if the attacker already opened with a concrete image (object, trade, animal, scene), the most effective defense STAYS within that same image and turns the ATTACKER\'s instrument back on them, worsened. Do NOT introduce a new domain if the existing image can be redirected.\n   Gold example: attack "your sword is so rusty you could grate parmesan with the blade" → defense "and yours is so short and dull it can\'t even spread butter" (same kitchen-tools frame, attacker\'s instrument worsens from grating to merely spreading).',
+		"3. Only if the golden rule does not apply (attack is abstract or has no flippable image): that word opens a DIFFERENT plane. Move the duel there — it's the lateral jump that unsettles the attacker.",
+		'4. Pick ONE technique from the TOOLBOX available at this difficulty, fit for defense.',
+		"5. Open VARYING turn by turn: sometimes statement, sometimes rhetorical question, sometimes ironic concession, sometimes the counter-object directly. EXPLICITLY FORBIDDEN to open every reply with 'At least I...' or any recurring formula.",
+		'6. Close with the fresh counter-attack, specific (preferably in the same frame if the golden rule applies).',
+		"7. Tone: one compact sentence (or two short ones if hook+counter requires). Forbidden: mirroring the attack's syntactic shape. Forbidden: copying the first words of the attack."
 	].join('\n');
 	return [
 		'You are a duelist in a Monkey Island-style insult swordfight. You are DEFENDING: an attack arrives and you must reply by hooking + flipping.',

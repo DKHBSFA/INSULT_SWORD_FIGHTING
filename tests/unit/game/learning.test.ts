@@ -8,7 +8,10 @@ import type { SaveEntryInput } from '../../../src/lib/server/pool/save';
 describe('applyLearning', () => {
 	it('saves player attack to NPC adaptive pool', async () => {
 		const db = {} as unknown as AppDb;
-		const env = {} as unknown as GatewayEnv & PoolEnv;
+		// applyLearning is gated behind ENABLE_LEARNING='true' so the production
+		// path does not consume Workers AI Neurons per save. Force the gate open
+		// in this unit test so we can verify the save behavior.
+		const env = { ENABLE_LEARNING: 'true' } as unknown as GatewayEnv & PoolEnv;
 		const ctx = { waitUntil: vi.fn() };
 		const calls: SaveEntryInput[] = [];
 		const fakeSave = (

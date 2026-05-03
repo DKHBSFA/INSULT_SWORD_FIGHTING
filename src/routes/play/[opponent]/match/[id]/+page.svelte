@@ -126,6 +126,9 @@
 			pendingNpcAttack = null;
 			return;
 		}
+		// Already have the NPC attack for the current turn — don't refetch on every
+		// data invalidation; submit() resets pendingNpcAttack between turns.
+		if (pendingNpcAttack !== null) return;
 		loadingPreview = true;
 		try {
 			const res = await fetch(`/api/challenges/${data.challenge.id}/turn/preview`, {

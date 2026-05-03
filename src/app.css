@@ -103,43 +103,53 @@
 	}
 	html {
 		font-size: 17px;
+		-webkit-font-smoothing: none;
+		-moz-osx-font-smoothing: grayscale;
+		font-smooth: never;
 	}
 	body {
 		@apply bg-background text-foreground;
 		font-family: 'VT323', 'Courier New', monospace;
 		letter-spacing: 0.02em;
 	}
-	h1,
-	h2,
-	h3,
-	h4 {
-		font-family: 'Press Start 2P', monospace;
-		letter-spacing: 0;
-		line-height: 1.4;
-	}
-	h1 {
-		font-size: 1.75rem;
-	}
-	h2 {
-		font-size: 1.1rem;
-	}
-	h3 {
-		font-size: 0.95rem;
-	}
-	/* Body copy is denser with VT323 — bump everything that is plain text. */
-	p,
-	li,
-	dd,
-	dt,
-	span:not([class*='font-']),
-	label {
-		font-size: 1.05rem;
-	}
-	code,
-	pre {
-		font-family: 'Press Start 2P', monospace;
-		font-size: 0.7rem;
-	}
+}
+
+/* Heading rules live OUTSIDE @layer base so they win against Tailwind v4's
+   own preflight reset — anonymous (no-layer) cascade is the last layer.
+   !important is the belt-and-suspenders against any utility class that sneaks
+   a font-family override through (e.g. shadcn defaults). */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	font-family: 'Press Start 2P', monospace !important;
+	letter-spacing: 0;
+	line-height: 1.4;
+}
+h1 {
+	font-size: 1.75rem;
+}
+h2 {
+	font-size: 1.4rem;
+	line-height: 1.5;
+}
+h3 {
+	font-size: 1.05rem;
+	line-height: 1.5;
+}
+p,
+li,
+dd,
+dt,
+label {
+	font-size: 1.05rem;
+}
+code,
+pre {
+	font-family: 'Press Start 2P', monospace;
+	font-size: 0.7rem;
 }
 
 @layer components {

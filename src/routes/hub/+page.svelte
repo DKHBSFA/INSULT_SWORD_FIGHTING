@@ -7,22 +7,39 @@
 </svelte:head>
 
 <main
-	class="pixel-screen relative min-h-screen w-full overflow-hidden bg-cover bg-center"
-	style="background-image: url('/assets/scenes/ship_deck_night/bg.svg')"
+	class="pixel-screen relative min-h-screen w-full overflow-hidden"
+	style="background:
+		radial-gradient(ellipse at 50% 25%, #2b3d75 0%, #14224a 35%, #0d1733 70%);"
 >
-	<!-- Foreground silhouette overlays the painted background. -->
-	<img
-		src="/assets/scenes/ship_deck_night/fg.svg"
-		alt=""
-		class="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-90"
-	/>
-
-	<!-- Vignette + bottom fade so the menu chrome is always readable over any scene. -->
+	<!-- Procedural starfield: tiny radial gradients sprinkled across the sky.
+	     Cheap, no asset dependency, scales nicely. -->
 	<div
-		class="pointer-events-none absolute inset-0"
-		style="background:
-			radial-gradient(ellipse at center, transparent 30%, rgba(13,23,51,0.85) 100%),
-			linear-gradient(to bottom, transparent 50%, rgba(13,23,51,0.95) 100%);"
+		class="pointer-events-none absolute inset-0 opacity-80"
+		style="background-image:
+			radial-gradient(1px 1px at 12% 18%, #f5e6c8 100%, transparent),
+			radial-gradient(1px 1px at 28% 9%, #f5e6c8 100%, transparent),
+			radial-gradient(1.5px 1.5px at 41% 22%, #ffffff 100%, transparent),
+			radial-gradient(1px 1px at 56% 11%, #f5e6c8 100%, transparent),
+			radial-gradient(1.5px 1.5px at 67% 6%, #ffffff 100%, transparent),
+			radial-gradient(1px 1px at 79% 19%, #f5e6c8 100%, transparent),
+			radial-gradient(1px 1px at 88% 8%, #f5e6c8 100%, transparent),
+			radial-gradient(1px 1px at 7% 33%, #b9a070 100%, transparent),
+			radial-gradient(1.5px 1.5px at 91% 28%, #ffffff 100%, transparent),
+			radial-gradient(1px 1px at 33% 38%, #b9a070 100%, transparent);
+		background-size: 100% 100%;"
+	></div>
+
+	<!-- Moon -->
+	<div
+		class="pointer-events-none absolute top-12 right-16 h-20 w-20 rounded-full"
+		style="background: radial-gradient(circle at 35% 35%, #fff8c8, #f5c542 60%, #b9a070 100%);
+			box-shadow: 0 0 40px rgba(245,197,66,0.35);"
+	></div>
+
+	<!-- Sea silhouette: solid darker stripe at the bottom -->
+	<div
+		class="pointer-events-none absolute right-0 bottom-0 left-0 h-1/3"
+		style="background: linear-gradient(to bottom, transparent, rgba(11,16,40,0.95) 60%, #06091a 100%);"
 	></div>
 
 	<div class="relative z-10 mx-auto flex min-h-screen max-w-3xl flex-col p-6">

@@ -18,6 +18,7 @@ import { validateInsultText } from '$lib/shared/validation';
 import { nextAttacker, isMatchOver, matchWinner } from '$lib/server/game/state';
 import { readDevUserId } from '$lib/server/auth/dev-user';
 import type { Judgment, Side } from '$lib/shared/types';
+import type { Difficulty } from '$lib/shared/difficulty';
 
 type AttackSource = 'personal_pool' | 'free_text' | 'opponent_npc';
 type DefenseSource = 'personal_pool' | 'free_text' | 'opponent_npc' | 'timeout';
@@ -120,7 +121,8 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 				personaDescriptionIt: persona[0].descriptionIt,
 				role: 'defender',
 				lastUserText: text,
-				mirrorLanguage: lang
+				mirrorLanguage: lang,
+				difficulty: ch[0].difficulty as Difficulty
 			});
 			defenseText = npc.text;
 			opponentModel = npc.modelId;
@@ -147,7 +149,8 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 				personaDescriptionIt: persona[0].descriptionIt,
 				role: 'attacker',
 				lastUserText: '',
-				mirrorLanguage: lang
+				mirrorLanguage: lang,
+				difficulty: ch[0].difficulty as Difficulty
 			});
 			attackText = npc.text;
 			opponentModel = npc.modelId;

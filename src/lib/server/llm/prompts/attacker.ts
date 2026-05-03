@@ -3,26 +3,35 @@
 // so the focus is on choosing a technique fit for the persona's world and
 // landing one concrete image without being a naked boast.
 import {
-	TECHNIQUES_IT,
-	TECHNIQUES_EN,
+	getToolboxIT,
+	getToolboxEN,
+	getRegisterGuidanceIT,
+	getRegisterGuidanceEN,
+	PERSONA_OVERRIDE_IT,
+	PERSONA_OVERRIDE_EN,
 	ANTI_PATTERNS_IT,
 	ANTI_PATTERNS_EN,
-	ITALIAN_IDIOMS
+	ITALIAN_IDIOMS,
+	tierForDifficulty
 } from '../kb';
+import type { Difficulty } from '../../../shared/difficulty';
 
 const TARGET_MAX_CHARS = 140;
 
 export type AttackerPromptInput = {
 	personaDescription: string;
 	mirrorLanguage: 'en' | 'it';
+	difficulty: Difficulty;
 };
 
 export function buildAttackerSystemPrompt(input: AttackerPromptInput): string {
+	const tier = tierForDifficulty(input.difficulty);
+
 	if (input.mirrorLanguage === 'it') {
 		const method = [
 			'METODO ATTACCO (esegui in silenzio, in ordine, prima di scrivere):',
 			'1. Osserva il PERSONAGGIO avversario e scegli UN tratto concreto (corpo, mestiere, abito, vizio, postura, oggetto del suo mondo).',
-			'2. Scegli UNA tecnica dal TOOLBOX adatta a chi apre il duello (preferisci 1 comparazione assurda, 2 cascata di immagini, 7 riduzione anatomica, 8 comparazione zoologica, 10 reductio, 11 veleno sotto proverbio).',
+			'2. Scegli UNA tecnica dal TOOLBOX disponibile a questa difficoltà.',
 			'3. Aggancia il tratto al confronto attraverso una conseguenza pratica banale (consumo, dimensione, durata, igiene, fame, tempo).',
 			"4. Pronuncia come constatazione tranquilla, mai come accusa esplicita. Vietato aprire con 'sei stupido/brutto/cattivo'.",
 			"5. Una sola figura. Una sola frase. Tono asciutto. VARIETÀ DI APERTURA: cambia ogni volta come inizia l'attacco. Vietato fissare formula ricorrente. Apri a volte con osservazione, a volte con domanda retorica, a volte direttamente con il paragone, a volte con imperativo asciutto."
@@ -32,7 +41,9 @@ export function buildAttackerSystemPrompt(input: AttackerPromptInput): string {
 			`PERSONAGGIO: ${input.personaDescription}`,
 			method,
 			"ANCORA AL PERSONAGGIO: l'attacco usa immagini concrete del MONDO del tuo personaggio. Vietate astrazioni generiche tipo 'sei brutto/stupido'.",
-			TECHNIQUES_IT,
+			getToolboxIT(tier),
+			getRegisterGuidanceIT(tier),
+			PERSONA_OVERRIDE_IT,
 			ANTI_PATTERNS_IT,
 			ITALIAN_IDIOMS,
 			"LINGUA: italiano corretto, vivo, idiomatico. Vietato inventare parole. Vietato calcare l'inglese (parole come 'barco', 'defenza', 'scurvo', 'possoo' non esistono). Vietate stringhe di codice o sintassi tecnica.",
@@ -47,7 +58,7 @@ export function buildAttackerSystemPrompt(input: AttackerPromptInput): string {
 	const method = [
 		'ATTACK METHOD (execute silently, in order, before writing):',
 		'1. Look at the opponent CHARACTER and pick ONE concrete trait (body, trade, clothing, vice, posture, object from their world).',
-		'2. Pick ONE technique from the TOOLBOX fit for opening (prefer 1 absurd comparison, 2 image cascade, 7 anatomical reduction, 8 bestiary insult, 10 reductio, 11 weaponized aphorism).',
+		'2. Pick ONE technique from the TOOLBOX available at this difficulty.',
 		'3. Anchor the trait to the comparison through a banal practical consequence (wear, size, duration, hygiene, hunger, time).',
 		'4. Deliver as a flat observation, never as accusation. Never open with "you are stupid/ugly/bad".',
 		'5. One figure. One sentence. Dry tone. VARY THE OPENING every turn: do not fix a recurring formula. Sometimes start with observation, sometimes a rhetorical question, sometimes the comparison itself, sometimes a dry imperative.'
@@ -57,7 +68,9 @@ export function buildAttackerSystemPrompt(input: AttackerPromptInput): string {
 		`CHARACTER: ${input.personaDescription}`,
 		method,
 		'CHARACTER ANCHOR: the attack uses concrete imagery from your character\'s WORLD. No generic abstractions like "you are stupid/ugly".',
-		TECHNIQUES_EN,
+		getToolboxEN(tier),
+		getRegisterGuidanceEN(tier),
+		PERSONA_OVERRIDE_EN,
 		ANTI_PATTERNS_EN,
 		'LANGUAGE: fluent natural English. Do not invent words. No code strings or technical syntax.',
 		'OUTPUT: one sentence, max ' +

@@ -62,7 +62,8 @@ describe('generateNpcLlm', () => {
 			personaDescription: 'pirate',
 			role: 'attacker',
 			lastUserText: '',
-			mirrorLanguage: 'en'
+			mirrorLanguage: 'en',
+			difficulty: 'medium'
 		});
 		expect(r.text).toBe('Aye, beast!');
 		expect(r.modelId).toBeDefined();

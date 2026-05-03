@@ -1,92 +1,216 @@
-// Knowledge base for the LLM prompts. Single source of truth for the 12-technique
-// toolbox, anti-patterns, Italian idioms, and the judge rubric.
+// Knowledge base for the LLM prompts. Single source of truth for the
+// 12-technique toolbox, anti-patterns, Italian idioms, and judge rubric.
+//
+// The KB is the METHOD, not insults to copy. Each technique carries ONE
+// canonical anchor as a stylistic example; the model is instructed in the
+// prompt to use the technique, NEVER to reproduce the example verbatim.
+//
+// TIER stratification: techniques are gated by difficulty so that at low
+// difficulty the opponent stays in MI ground-combat register (no Shakespeare
+// cascades, no Wilde antithesis). Each tier is a strict superset of the one
+// below; tier 5 = all 12 techniques.
 //
 // Authoritative source documents:
 //   references/insult-construction-kb.md  — original method spec
-//   references/wits-corpus.md             — canonical examples (Shakespeare, Wilde, …)
-//   references/mi-pairs-audit.md          — mapping of MI corpus to techniques
-//
-// The KB is the METHOD, not insults to copy. Each technique carries ONE
-// canonical example as a stylistic anchor. The model is instructed in the
-// prompt to use the technique, NEVER to reproduce the example verbatim.
+//   references/wits-corpus.md             — canonical examples
+//   references/mi-pairs-audit.md          — coverage analysis
 
-export const TECHNIQUES_IT = `TOOLBOX — 12 tecniche del wit (Shakespeare, Wilde, Churchill, Twain, Parker, Marx, Monkey Island).
-Per ogni turno: scegli UNA tecnica adatta al contesto. NON nominarla. NON ripetere parola per parola gli esempi.
+import type { Difficulty } from '../../shared/difficulty';
 
-1. comparazione assurda — paragoni iperbolici concreti che riducono il bersaglio.
-   es: "Via, sciocco da tre dita." (Shakespeare)
+export type Tier = 1 | 2 | 3 | 4 | 5;
 
-2. cascata di immagini — sequenza di metafore accumulate, ogni elemento più grottesco.
-   es: "Via, denutrito, pelle d'elfo, lingua di vitello secca, nervo di toro, baccalà!" (Shakespeare, Falstaff)
+export function tierForDifficulty(d: Difficulty): Tier {
+	if (d === 'easy') return 1;
+	if (d === 'medium') return 2;
+	if (d === 'hard') return 3;
+	if (d === 'expert') return 4;
+	return 5;
+}
 
-3. faint praise — sembra un complimento, è un'esecuzione.
-   es: "Il tuo viso non merita nemmeno una scottatura solare." (Shakespeare); "Attlee è un uomo modesto con molto di cui essere modesto." (Churchill)
+type TechniqueDef = {
+	id: number;
+	nameIt: string;
+	nameEn: string;
+	howIt: string;
+	howEn: string;
+};
 
-4. inversione antitetica — mantieni la struttura nobile, sostituisci una parola che ribalta il senso.
-   es: "Alcuni causano felicità ovunque vadano, altri ogniqualvolta se ne vadano." (Wilde); "La musica di Wagner è migliore di come suona." (Twain)
+const TECHNIQUES: TechniqueDef[] = [
+	{
+		id: 1,
+		nameIt: 'comparazione assurda',
+		nameEn: 'absurd comparison',
+		howIt:
+			'paragoni iperbolici concreti che riducono il bersaglio.\n   es: "Via, sciocco da tre dita." (Shakespeare)',
+		howEn:
+			'hyperbolic concrete comparison that diminishes the target.\n   ex: "Away, you three-inch fool!" (Shakespeare)'
+	},
+	{
+		id: 2,
+		nameIt: 'cascata di immagini',
+		nameEn: 'image cascade',
+		howIt:
+			'sequenza di metafore accumulate, ogni elemento più grottesco.\n   es: "Via, denutrito, pelle d\'elfo, lingua di vitello secca, nervo di toro, baccalà!" (Shakespeare, Falstaff)',
+		howEn:
+			'sequence of accumulated metaphors, each more grotesque.\n   ex: "Away, you starvelling, you elf-skin, you dried neat\'s-tongue, bull\'s-pizzle, you stock-fish!" (Shakespeare, Falstaff)'
+	},
+	{
+		id: 3,
+		nameIt: 'faint praise',
+		nameEn: 'faint praise',
+		howIt:
+			'sembra un complimento, è un\'esecuzione.\n   es: "Il tuo viso non merita nemmeno una scottatura solare." (Shakespeare); "Attlee è un uomo modesto con molto di cui essere modesto." (Churchill)',
+		howEn:
+			'looks like compliment, is execution.\n   ex: "Thine face is not worth sunburning." (Shakespeare); "Attlee is a modest man with much to be modest about." (Churchill)'
+	},
+	{
+		id: 4,
+		nameIt: 'inversione antitetica',
+		nameEn: 'antithetical substitution',
+		howIt:
+			'mantieni la struttura nobile, sostituisci una parola che ribalta il senso.\n   es: "Alcuni causano felicità ovunque vadano, altri ogniqualvolta se ne vadano." (Wilde); "La musica di Wagner è migliore di come suona." (Twain)',
+		howEn:
+			'keep the noble structure, swap one word that flips meaning.\n   ex: "Some cause happiness wherever they go, others whenever they go." (Wilde); "Wagner\'s music is better than it sounds." (Twain)'
+	},
+	{
+		id: 5,
+		nameIt: 'falso disconoscimento',
+		nameEn: 'false reassurance collapse',
+		howIt:
+			'apri come scusante, conferma il peggio.\n   es: "Può sembrare un idiota e parlare come un idiota, ma non farti ingannare: è davvero un idiota." (Marx)',
+		howEn:
+			'open as if making excuse, confirm the worst.\n   ex: "He may look like an idiot and talk like an idiot but don\'t let that fool you. He really is an idiot." (Marx)'
+	},
+	{
+		id: 6,
+		nameIt: 'eccezione ironica',
+		nameEn: 'conditional reversal',
+		howIt:
+			'neghi un tuo principio per fare un\'eccezione devastante.\n   es: "Non dimentico mai una faccia, ma nel tuo caso farò un\'eccezione." (Marx); "Non ho mai augurato la morte a nessuno, ma ho letto certi necrologi con grande piacere." (Twain)',
+		howEn:
+			'deny a principle to make a devastating exception.\n   ex: "I never forget a face, but in your case I\'ll make an exception." (Marx); "I have never wished a man dead, but I have read some obituaries with great pleasure." (Twain)'
+	},
+	{
+		id: 7,
+		nameIt: 'riduzione anatomica',
+		nameEn: 'anatomical reduction',
+		howIt:
+			'bersaglio = parte del corpo, fluido, funzione.\n   es: "Pace, pancia di lardo!" (Shakespeare); "Sei più gonfio di una vescica di porco."',
+		howEn:
+			'target reduced to body part, fluid, or function.\n   ex: "Peace, ye fat guts!" (Shakespeare); "Thou clay-brained guts, thou knotty-pated fool." (Shakespeare)'
+	},
+	{
+		id: 8,
+		nameIt: 'comparazione zoologica',
+		nameEn: 'bestiary insult',
+		howIt:
+			'animale specifico per evocare il difetto.\n   es: "Capra di montagna lussuriosa e dannata." (Shakespeare); "Brutto e velenoso come il rospo." (Shakespeare); "Combatti come una vacca." (Monkey Island)',
+		howEn:
+			'specific animal evokes the flaw.\n   ex: "Thou damned and luxurious mountain goat." (Shakespeare); "Like the toad; ugly and venomous." (Shakespeare); "You fight like a cow." (Monkey Island)'
+	},
+	{
+		id: 9,
+		nameIt: 'counter letterale',
+		nameEn: 'literal counter',
+		howIt:
+			'prendi l\'attacco alla lettera e rendilo ridicolo.\n   es: Lady Astor: "Se fossi tua moglie ti metterei il veleno nel caffè." Churchill: "Nancy, se fossi tuo marito, lo berrei."',
+		howEn:
+			'take the attack literally, make it ridiculous.\n   ex: Lady Astor: "If I were married to you, I\'d put poison in your coffee." Churchill: "Nancy, if I were married to you, I\'d drink it."'
+	},
+	{
+		id: 10,
+		nameIt: 'reductio ad rem absurdam',
+		nameEn: 'reductio ad rem absurdam',
+		howIt:
+			'dettaglio così precisamente ridicolo da essere irrefutabile.\n   es: "Un taxi vuoto si fermò a Downing Street e ne uscì Clement Attlee." (Churchill)',
+		howEn:
+			'detail so precisely ridiculous it is irrefutable.\n   ex: "An empty taxi drew up to Downing Street, and Clement Attlee got out." (Churchill)'
+	},
+	{
+		id: 11,
+		nameIt: 'veleno sotto il proverbio',
+		nameEn: 'weaponized aphorism',
+		howIt:
+			'forma sentenziosa in cui l\'applicazione è l\'attacco.\n   es: "Il problema non è che ci sono troppi sciocchi, è che i fulmini non sono distribuiti bene." (Twain)',
+		howEn:
+			'sentence-form (aphorism) where the application IS the attack.\n   ex: "The trouble ain\'t that there are too many fools, but that the lightning ain\'t distributed right." (Twain)'
+	},
+	{
+		id: 12,
+		nameIt: 'pickup-and-escalate',
+		nameEn: 'pickup-and-escalate',
+		howIt:
+			'prendi UNA parola dell\'attacco e spingila in territorio peggiore.\n   es: Luce: "Age before beauty." Parker: "Pearls before swine." (riprende "before", lo riapplica a "swine"); MI: "Combatti come un contadino" → "Appropriato. Combatti come una vacca."',
+		howEn:
+			'take ONE word from the attack and push it into worse territory.\n   ex: Luce: "Age before beauty." Parker: "Pearls before swine." (takes "before", reapplies to "swine"); MI: "You fight like a dairy farmer" → "How appropriate. You fight like a cow."'
+	}
+];
 
-5. falso disconoscimento — apri come scusante, conferma il peggio.
-   es: "Può sembrare un idiota e parlare come un idiota, ma non farti ingannare: è davvero un idiota." (Marx)
+// Strict-superset tier mapping: tier N includes all techniques of tier N-1.
+// Lower tiers stay earthy/MI; higher tiers add structural and aphoristic.
+const TIER_TECHNIQUES: Record<Tier, number[]> = {
+	1: [1, 7, 8, 12], // earthy MI ground combat: absurd, anatomical, bestiary, pickup-and-escalate
+	2: [1, 3, 7, 8, 9, 12], // + faint praise, literal counter (MI canonical Brutus)
+	3: [1, 3, 4, 6, 7, 8, 9, 12], // + antithetical, conditional reversal (Reginald polish)
+	4: [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], // + false reassurance, reductio, weaponized aphorism (mid-Wilde)
+	5: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] // + image cascade (Falstaff): full Sword Master
+};
 
-6. eccezione ironica — neghi un tuo principio per fare un'eccezione devastante.
-   es: "Non dimentico mai una faccia, ma nel tuo caso farò un'eccezione." (Marx); "Non ho mai augurato la morte a nessuno, ma ho letto certi necrologi con grande piacere." (Twain)
+function buildToolbox(lang: 'en' | 'it', tier: Tier): string {
+	const ids = TIER_TECHNIQUES[tier];
+	const techs = TECHNIQUES.filter((t) => ids.includes(t.id));
+	const header =
+		lang === 'it'
+			? `TOOLBOX (livello ${tier}/5) — tecniche del wit selezionate per questa difficoltà. Per ogni turno: scegli UNA tecnica adatta al contesto. NON nominarla. NON ripetere parola per parola gli esempi.`
+			: `TOOLBOX (level ${tier}/5) — wit techniques selected for this difficulty. Each turn: pick ONE technique fit for context. Do NOT name it. Do NOT reproduce examples verbatim.`;
+	const body = techs
+		.map(
+			(t) =>
+				`${t.id}. ${lang === 'it' ? t.nameIt : t.nameEn} — ${lang === 'it' ? t.howIt : t.howEn}`
+		)
+		.join('\n\n');
+	return `${header}\n\n${body}`;
+}
 
-7. riduzione anatomica — bersaglio = parte del corpo, fluido, funzione.
-   es: "Pace, pancia di lardo!" (Shakespeare); "Sei più gonfio di una vescica di porco."
+export function getToolboxIT(tier: Tier): string {
+	return buildToolbox('it', tier);
+}
+export function getToolboxEN(tier: Tier): string {
+	return buildToolbox('en', tier);
+}
 
-8. comparazione zoologica — animale specifico per evocare il difetto.
-   es: "Capra di montagna lussuriosa e dannata." (Shakespeare); "Brutto e velenoso come il rospo." (Shakespeare)
+// Tier-specific register guidance. The lower the tier, the rougher and more
+// physical the language; the higher, the more allusive and aphoristic.
+const REGISTER_GUIDANCE_IT: Record<Tier, string> = {
+	1: 'REGISTRO: tono concreto, fisico, marinaresco. Frase corta. Niente latinismi, niente aforismi colti, niente riferimenti letterari. Pesca dal mondo del PERSONAGGIO (oggetti banali, animali, conseguenze pratiche).',
+	2: 'REGISTRO: ironia visibile, paragoni concreti, frasi di media lunghezza. Niente aforismi di stile colto né allusioni letterarie. Permessi diminutivi sprezzanti.',
+	3: 'REGISTRO: polish nobiliare permesso. Latinismi limitati per personaggi nobili. Strutture più articolate (fino a due frasi). Niente cascate Shakespeariane né allusioni a Wilde/Twain esplicite.',
+	4: 'REGISTRO: allusivo, aforistico permesso. Wilde-like antithesis e Twain-like aphorism benvenuti. Niente cascate da Falstaff (riservate al livello massimo).',
+	5: 'REGISTRO: alto, citazionale, cascata Shakespeariana possibile. Tutte le tecniche disponibili — usa la rara quando il contesto la richiede.'
+};
+const REGISTER_GUIDANCE_EN: Record<Tier, string> = {
+	1: "REGISTER: concrete, physical, nautical tone. Short sentence. No Latinisms, no learned aphorisms, no literary references. Pull from the CHARACTER's world (banal objects, animals, practical consequences).",
+	2: 'REGISTER: visible irony, concrete comparisons, medium-length sentences. No learned-style aphorisms or literary allusions. Pet diminutives allowed.',
+	3: 'REGISTER: noble polish allowed. Limited Latinisms for noble characters. More articulated structures (up to two sentences). No Shakespearean cascades or explicit Wilde/Twain allusions.',
+	4: 'REGISTER: allusive, aphoristic allowed. Wilde-like antithesis and Twain-like aphorism welcome. No Falstaff cascades (reserved for top tier).',
+	5: 'REGISTER: high, citational, Shakespearean cascade possible. All techniques available — use the rare one when context calls for it.'
+};
 
-9. counter letterale — prendi l'attacco alla lettera e rendilo ridicolo.
-   es: Lady Astor: "Se fossi tua moglie ti metterei il veleno nel caffè." Churchill: "Nancy, se fossi tuo marito, lo berrei."
+export function getRegisterGuidanceIT(tier: Tier): string {
+	return REGISTER_GUIDANCE_IT[tier];
+}
+export function getRegisterGuidanceEN(tier: Tier): string {
+	return REGISTER_GUIDANCE_EN[tier];
+}
 
-10. reductio ad rem absurdam — dettaglio così precisamente ridicolo da essere irrefutabile.
-    es: "Un taxi vuoto si fermò a Downing Street e ne uscì Clement Attlee." (Churchill)
-
-11. veleno sotto il proverbio — forma sentenziosa in cui l'applicazione è l'attacco.
-    es: "Il problema non è che ci sono troppi sciocchi, è che i fulmini non sono distribuiti bene." (Twain)
-
-12. pickup-and-escalate — prendi UNA parola dell'attacco e spingila in territorio peggiore.
-    es: Clare Boothe Luce: "Age before beauty." Parker: "Pearls before swine." (riprende "before", lo riapplica a "swine"); MI: "Combatti come un contadino" → "Appropriato. Combatti come una vacca."`;
-
-export const TECHNIQUES_EN = `TOOLBOX — 12 wit techniques (Shakespeare, Wilde, Churchill, Twain, Parker, Marx, Monkey Island).
-Each turn: pick ONE technique fit for context. Do NOT name it. Do NOT reproduce examples verbatim.
-
-1. absurd comparison — hyperbolic concrete comparison that diminishes the target.
-   ex: "Away, you three-inch fool!" (Shakespeare)
-
-2. image cascade — sequence of accumulated metaphors, each more grotesque.
-   ex: "Away, you starvelling, you elf-skin, you dried neat's-tongue, bull's-pizzle, you stock-fish!" (Shakespeare, Falstaff)
-
-3. faint praise — looks like compliment, is execution.
-   ex: "Thine face is not worth sunburning." (Shakespeare); "Attlee is a modest man with much to be modest about." (Churchill)
-
-4. antithetical substitution — keep the noble structure, swap one word that flips meaning.
-   ex: "Some cause happiness wherever they go, others whenever they go." (Wilde); "Wagner's music is better than it sounds." (Twain)
-
-5. false reassurance collapse — open as if making excuse, confirm the worst.
-   ex: "He may look like an idiot and talk like an idiot but don't let that fool you. He really is an idiot." (Marx)
-
-6. conditional reversal — deny a principle to make a devastating exception.
-   ex: "I never forget a face, but in your case I'll make an exception." (Marx); "I have never wished a man dead, but I have read some obituaries with great pleasure." (Twain)
-
-7. anatomical reduction — target reduced to body part, fluid, or function.
-   ex: "Peace, ye fat guts!" (Shakespeare); "Thou clay-brained guts, thou knotty-pated fool." (Shakespeare)
-
-8. bestiary insult — specific animal evokes the flaw.
-   ex: "Thou damned and luxurious mountain goat." (Shakespeare); "Like the toad; ugly and venomous." (Shakespeare)
-
-9. literal counter — take the attack literally, make it ridiculous.
-   ex: Lady Astor: "If I were married to you, I'd put poison in your coffee." Churchill: "Nancy, if I were married to you, I'd drink it."
-
-10. reductio ad rem absurdam — detail so precisely ridiculous it is irrefutable.
-    ex: "An empty taxi drew up to Downing Street, and Clement Attlee got out." (Churchill)
-
-11. weaponized aphorism — sentence-form (aphorism) where the application IS the attack.
-    ex: "The trouble ain't that there are too many fools, but that the lightning ain't distributed right." (Twain)
-
-12. pickup-and-escalate — take ONE word from the attack and push it into worse territory.
-    ex: Luce: "Age before beauty." Parker: "Pearls before swine." (takes "before", reapplies to "swine"); MI: "You fight like a dairy farmer" → "How appropriate. You fight like a cow."`;
+// Persona override line — shown in EVERY prompt regardless of tier.
+// Persona always wins against tier: a rough pirate at tier 5 still uses pirate
+// vocabulary, just with access to richer techniques. A nobleman at tier 1 stays
+// noble, just constrained to simpler techniques.
+export const PERSONA_OVERRIDE_IT =
+	'REGISTRO PERSONA (sovrasta tutto): se il PERSONAGGIO è un pirata rozzo, niente aforismi colti né latinismi anche se il TOOLBOX li contempla. Se è un nobile, registro polished. Le tecniche del TOOLBOX sono RICETTE, non livello di registro: usale al livello del PERSONAGGIO.';
+export const PERSONA_OVERRIDE_EN =
+	"PERSONA REGISTER (overrides everything): if the CHARACTER is a rough pirate, no learned aphorisms or Latinisms even if the TOOLBOX includes them. If a nobleman, polished register. TOOLBOX techniques are RECIPES, not a register level: apply them at the CHARACTER's level.";
 
 export const ANTI_PATTERNS_IT = `ANTI-PATTERN VIETATI (l'output che li contiene è scartato e ritentato):
 - insulto generico astratto ("sei brutto", "sei stupido") — niente immagine concreta.
@@ -119,7 +243,9 @@ export const ITALIAN_IDIOMS = `COSTRUZIONI ITALIANE PREFERITE (sfrutta queste, n
 - Latinismi pretenziosi solo per personaggi nobiliari ("de minimis non curat lex", "vox populi").
 - Tono asciutto, poche parole, immagini concrete del mondo del personaggio.`;
 
-// Judge-flavored versions: same content reframed as evaluation criteria.
+// Judge stays tier-agnostic: it judges what's actually present in the texts.
+// Rare-technique bonus naturally won't fire at low tiers because those
+// techniques won't appear; the rubric still works.
 
 export const JUDGE_TECHNIQUE_BONUS_IT = `BONUS DI STILE — premia con defender_wins (anche con aggancio leggero) se la difesa esegue bene una di queste tecniche:
 absurd comparison · image cascade · faint praise · inversione antitetica · falso disconoscimento · eccezione ironica · riduzione anatomica · comparazione zoologica · counter letterale · reductio ad absurdum · veleno sotto proverbio · pickup-and-escalate.

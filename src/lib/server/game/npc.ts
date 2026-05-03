@@ -6,6 +6,7 @@ import { queryPoolVectors, type PoolEnv } from '../pool/search';
 import { seedsByPersona } from '../../../../db/seed/pools';
 import type { GatewayEnv } from '../llm/gateway';
 import type { AppDb } from '../db/client';
+import type { Difficulty } from '$lib/shared/difficulty';
 
 export async function pickNpcDeterministic(
 	db: AppDb,
@@ -36,6 +37,7 @@ export type NpcLlmInput = {
 	role: 'attacker' | 'defender';
 	lastUserText: string;
 	mirrorLanguage: 'en' | 'it';
+	difficulty: Difficulty;
 };
 
 export async function generateNpcLlm(
@@ -93,6 +95,7 @@ export async function generateNpcLlm(
 		fewShot,
 		fewShotPairs: pairFewShot,
 		lastUserText: input.lastUserText,
-		mirrorLanguage: input.mirrorLanguage
+		mirrorLanguage: input.mirrorLanguage,
+		difficulty: input.difficulty
 	});
 }

@@ -3,6 +3,7 @@ import { withRetry, withTimeout } from './retry';
 import { INSULT_MAX_CHARS } from '../../shared/validation';
 import { buildAttackerSystemPrompt } from './prompts/attacker';
 import { buildDefenderSystemPrompt } from './prompts/defender';
+import type { Difficulty } from '../../shared/difficulty';
 
 const OPPONENT_MODEL = '@cf/mistralai/mistral-small-3.1-24b-instruct';
 
@@ -13,18 +14,21 @@ export type OpponentInput = {
 	fewShotPairs?: { attack: string; defense: string }[];
 	lastUserText: string;
 	mirrorLanguage: 'en' | 'it';
+	difficulty: Difficulty;
 };
 
 function buildSystemPrompt(input: OpponentInput): string {
 	if (input.role === 'attacker') {
 		return buildAttackerSystemPrompt({
 			personaDescription: input.personaDescription,
-			mirrorLanguage: input.mirrorLanguage
+			mirrorLanguage: input.mirrorLanguage,
+			difficulty: input.difficulty
 		});
 	}
 	return buildDefenderSystemPrompt({
 		personaDescription: input.personaDescription,
-		mirrorLanguage: input.mirrorLanguage
+		mirrorLanguage: input.mirrorLanguage,
+		difficulty: input.difficulty
 	});
 }
 

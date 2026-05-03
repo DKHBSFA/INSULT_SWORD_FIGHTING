@@ -14,6 +14,7 @@ import { getVectorizeBinding } from '$lib/server/pool/vectorize-mock';
 import { nextAttacker } from '$lib/server/game/state';
 import { readDevUserId } from '$lib/server/auth/dev-user';
 import type { Judgment, Side } from '$lib/shared/types';
+import type { Difficulty } from '$lib/shared/difficulty';
 
 export const POST: RequestHandler = async ({ request, params, platform }) => {
 	if (!platform?.env) return new Response('platform unavailable', { status: 500 });
@@ -96,7 +97,8 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			personaDescriptionIt: persona.descriptionIt,
 			role: 'attacker',
 			lastUserText: '',
-			mirrorLanguage: lang
+			mirrorLanguage: lang,
+			difficulty: ch.difficulty as Difficulty
 		});
 		attackText = npc.text;
 	}

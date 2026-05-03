@@ -13,7 +13,8 @@ describe('generateOpponent', () => {
 			personaDescription: 'old British pirate',
 			fewShot: [{ kind: 'attack', text: 'Yer barnacle-faced!' }],
 			lastUserText: '',
-			mirrorLanguage: 'en'
+			mirrorLanguage: 'en',
+			difficulty: 'medium'
 		});
 		expect(r.text).toContain('scurvy');
 		expect(r.modelId).toBeDefined();

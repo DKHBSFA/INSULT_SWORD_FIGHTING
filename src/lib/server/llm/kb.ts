@@ -113,9 +113,9 @@ const TECHNIQUES: TechniqueDef[] = [
 		nameIt: 'counter letterale',
 		nameEn: 'literal counter',
 		howIt:
-			'prendi l\'attacco alla lettera e rendilo ridicolo.\n   es: Lady Astor: "Se fossi tua moglie ti metterei il veleno nel caffè." Churchill: "Nancy, se fossi tuo marito, lo berrei."',
+			'prendi l\'attacco alla lettera e rendilo ridicolo. Sotto-pattern OMONIMO (tier alto): se l\'attacco usa un sostantivo che ha una seconda accezione, leggi la parola nella seconda accezione e attribuisci all\'oggetto il comportamento di quel referente.\n   es 1: Lady Astor: "Se fossi tua moglie ti metterei il veleno nel caffè." Churchill: "Nancy, se fossi tuo marito, lo berrei."\n   es 2 (omonimo): attacco "hai la spada così arrugginita che potresti grattugiare il parmigiano con la lama" → difesa "almeno la mia è utile, la tua sa solo sputare" (omonimo: lama = arma vs Lama = camelide sudamericano che sputa davvero; il difensore lascia il sostantivo dell\'attacco scivolare nella seconda accezione e gli affibbia il comportamento dell\'animale, degradando la lama dell\'avversario da arma a camelide).',
 		howEn:
-			'take the attack literally, make it ridiculous.\n   ex: Lady Astor: "If I were married to you, I\'d put poison in your coffee." Churchill: "Nancy, if I were married to you, I\'d drink it."'
+			'take the attack literally, make it ridiculous. HOMONYM sub-pattern (high tier): if the attack uses a noun with a second meaning, read the word in its second meaning and ascribe to the object the referent\'s typical behavior.\n   ex 1: Lady Astor: "If I were married to you, I\'d put poison in your coffee." Churchill: "Nancy, if I were married to you, I\'d drink it."\n   ex 2 (homonym, Italian): attack "your sword is so rusty you could grate parmesan with the blade" → defense "at least mine is useful, yours only knows how to spit" (Italian homonym: lama = blade vs Lama = South American camelid that really spits; the defender lets the attacker\'s noun slip into the second meaning and ascribes the animal\'s behavior to it, downgrading the attacker\'s blade from weapon to camelid).'
 	},
 	{
 		id: 10,
@@ -179,21 +179,27 @@ export function getToolboxEN(tier: Tier): string {
 	return buildToolbox('en', tier);
 }
 
-// Tier-specific register guidance. The lower the tier, the rougher and more
-// physical the language; the higher, the more allusive and aphoristic.
+// Tier-specific SAGACITY guidance. The tier scales the SOPHISTICATION of the
+// wit-technique (which structures are unlocked), NOT the level of formal or
+// pretentious vocabulary. Register comes from PERSONA_OVERRIDE — a pirate at
+// tier 4 stays a pirate, just with access to layered structures (aphorism,
+// antithesis, reductio); a nobleman at tier 1 stays a nobleman, just with
+// only elementary techniques. Difficulty cosplay (e.g., adding "Mio caro"
+// vocatives or flowery vocabulary at high tier) is REJECTED — that is
+// caricature, not wit.
 const REGISTER_GUIDANCE_IT: Record<Tier, string> = {
-	1: 'REGISTRO: tono concreto, fisico, marinaresco. Frase corta. Niente latinismi, niente aforismi colti, niente riferimenti letterari. Pesca dal mondo del PERSONAGGIO (oggetti banali, animali, conseguenze pratiche).',
-	2: 'REGISTRO: ironia visibile, paragoni concreti, frasi di media lunghezza. Niente aforismi di stile colto né allusioni letterarie. Permessi diminutivi sprezzanti.',
-	3: 'REGISTRO: polish nobiliare permesso. Latinismi limitati per personaggi nobili. Strutture più articolate (fino a due frasi). Niente cascate Shakespeariane né allusioni a Wilde/Twain esplicite.',
-	4: 'REGISTRO: allusivo, aforistico permesso. Wilde-like antithesis e Twain-like aphorism benvenuti. Niente cascate da Falstaff (riservate al livello massimo).',
-	5: 'REGISTRO: alto, citazionale, cascata Shakespeariana possibile. Tutte le tecniche disponibili — usa la rara quando il contesto la richiede.'
+	1: 'SAGACIA (livello 1/5): tecniche elementari (paragone diretto, riduzione anatomica, comparazione zoologica, pickup-and-escalate). Una sola figura concreta per turno, frase corta. NIENTE doppi sensi stratificati, NIENTE strutture aforistiche o antitetiche. Il REGISTRO della voce viene dal PERSONAGGIO (vedi PERSONA REGISTER), non dalla difficoltà.',
+	2: 'SAGACIA (livello 2/5): in aggiunta a tier 1, faint praise e counter letterale. Frasi medie. NIENTE aforismi colti né antitesi nobili. Il REGISTRO viene dalla persona.',
+	3: 'SAGACIA (livello 3/5): in aggiunta a tier 2, antitesi (technique 4) e eccezione ironica (technique 6). Strutture articolate (fino a due frasi). NIENTE allusioni esplicite Wilde/Twain. Il REGISTRO viene dalla persona.',
+	4: 'SAGACIA (livello 4/5): in aggiunta a tier 3, le tecniche RARE (false reassurance collapse, reductio ad absurdam, weaponized aphorism, omonimo lessicale come sotto-pattern di counter letterale). La sagacia tier 4 vive nella STRUTTURA della frase: definizione+applicazione alla Twain, antitesi alla Wilde che ribalta una sola parola, dettaglio irrefutabile alla Churchill, ambiguità lessicale che apre un secondo referente. Il REGISTRO viene dalla persona — il nobile parla nobile, il pirata parla pirata, il colpo è il pattern strutturale. Cosplay-vocativo (vocativi pretenziosi senza colpo strutturale) è caricatura, non wit.',
+	5: 'SAGACIA (livello 5/5): tutte le tecniche, cascata di immagini possibile (Falstaff style). Il colpo è strutturale (cascata grottesca, antitesi profonda, definizione devastante), non lessicale. Il REGISTRO viene dalla persona.'
 };
 const REGISTER_GUIDANCE_EN: Record<Tier, string> = {
-	1: "REGISTER: concrete, physical, nautical tone. Short sentence. No Latinisms, no learned aphorisms, no literary references. Pull from the CHARACTER's world (banal objects, animals, practical consequences).",
-	2: 'REGISTER: visible irony, concrete comparisons, medium-length sentences. No learned-style aphorisms or literary allusions. Pet diminutives allowed.',
-	3: 'REGISTER: noble polish allowed. Limited Latinisms for noble characters. More articulated structures (up to two sentences). No Shakespearean cascades or explicit Wilde/Twain allusions.',
-	4: 'REGISTER: allusive, aphoristic allowed. Wilde-like antithesis and Twain-like aphorism welcome. No Falstaff cascades (reserved for top tier).',
-	5: 'REGISTER: high, citational, Shakespearean cascade possible. All techniques available — use the rare one when context calls for it.'
+	1: 'SAGACITY (level 1/5): elementary techniques (direct comparison, anatomical reduction, bestiary, pickup-and-escalate). One concrete image per turn, short sentence. NO layered double meaning, NO aphoristic or antithetical structures. The REGISTER of voice comes from the CHARACTER (see PERSONA REGISTER), not from difficulty.',
+	2: 'SAGACITY (level 2/5): in addition to tier 1, faint praise and literal counter. Medium sentences. NO learned aphorisms or noble antithesis. REGISTER from persona.',
+	3: 'SAGACITY (level 3/5): in addition to tier 2, antithetical substitution (technique 4) and conditional reversal (technique 6). Articulated structures (up to two sentences). NO explicit Wilde/Twain allusions. REGISTER from persona.',
+	4: 'SAGACITY (level 4/5): in addition to tier 3, the RARE techniques (false reassurance collapse, reductio ad absurdam, weaponized aphorism, lexical homonym as sub-pattern of literal counter). Tier-4 sagacity lives in SENTENCE STRUCTURE: Twain-style definition+application, Wilde-style antithesis flipping one word, Churchill-style irrefutable detail, lexical ambiguity opening a second referent. The REGISTER comes from the persona — noble speaks noble, pirate speaks pirate; the strike is the structural pattern. Pretentious-vocative cosplay (vocatives without structural strike) is caricature, not wit.',
+	5: 'SAGACITY (level 5/5): all techniques, image cascade allowed (Falstaff style). The strike is structural (grotesque cascade, deep antithesis, devastating definition), not lexical. REGISTER from persona.'
 };
 
 export function getRegisterGuidanceIT(tier: Tier): string {
@@ -208,9 +214,9 @@ export function getRegisterGuidanceEN(tier: Tier): string {
 // vocabulary, just with access to richer techniques. A nobleman at tier 1 stays
 // noble, just constrained to simpler techniques.
 export const PERSONA_OVERRIDE_IT =
-	'REGISTRO PERSONA (sovrasta tutto): se il PERSONAGGIO è un pirata rozzo, niente aforismi colti né latinismi anche se il TOOLBOX li contempla. Se è un nobile, registro polished. Le tecniche del TOOLBOX sono RICETTE, non livello di registro: usale al livello del PERSONAGGIO.';
+	"REGISTRO PERSONA (sovrasta tutto): la persona governa VOCE e LESSICO, NON il FRAME-IMMAGINE. Pirata rozzo → niente aforismi colti né latinismi anche se il TOOLBOX li contempla. Nobile → registro polished. Le tecniche del TOOLBOX sono RICETTE, non livello di registro. In DIFESA il frame-immagine è scelto dall'attaccante (REGOLA AUREA): resta lì anche se non è il mondo naturale del tuo personaggio — la voce colorisce COME lo dici, non ti costringe a forzare oggetti del tuo dominio. Se l'attaccante apre in cucina, il pirata risponde in cucina con tono asciutto da pirata, non si reinventa galletta+vermi solo perché è marinaio.";
 export const PERSONA_OVERRIDE_EN =
-	"PERSONA REGISTER (overrides everything): if the CHARACTER is a rough pirate, no learned aphorisms or Latinisms even if the TOOLBOX includes them. If a nobleman, polished register. TOOLBOX techniques are RECIPES, not a register level: apply them at the CHARACTER's level.";
+	"PERSONA REGISTER (overrides everything): the persona governs VOICE and LEXICON, NOT the IMAGE-FRAME. Rough pirate → no learned aphorisms or Latinisms even if the TOOLBOX includes them. Nobleman → polished register. TOOLBOX techniques are RECIPES, not a register level. When DEFENDING, the image-frame is set by the attacker (GOLDEN RULE): stay there even if it is not your character's natural world — the voice colors HOW you say it, it does not force you to retrofit objects from your domain. If the attacker opens in a kitchen, the pirate replies in the kitchen with a pirate's dry tone, he does not reinvent the scene as ship's-hardtack-and-weevils just because he is a sailor.";
 
 export const ANTI_PATTERNS_IT = `ANTI-PATTERN VIETATI (l'output che li contiene è scartato e ritentato):
 - insulto generico astratto ("sei brutto", "sei stupido") — niente immagine concreta.
